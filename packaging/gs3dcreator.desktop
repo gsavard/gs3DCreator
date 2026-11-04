@@ -1,0 +1,20 @@
+[Desktop Entry]
+Type=Application
+Name=gs3Dcreator
+GenericName=Découpe de modèles 3D
+GenericName[en]=3D model splitter
+Comment=Découpe une figurine en pièces imprimables avec rotules, goujons ou tenons
+Comment[en]=Split a 3D model into printable parts with ball joints, dowels or pegs
+Exec=gs3dcreator ouvrir
+Icon=gs3dcreator
+Terminal=false
+Categories=Graphics;3DGraphics;Engineering;
+Keywords=3D;STL;3MF;OBJ;impression;découpe;print;split;figurine;
+StartupNotify=false
+StartupWMClass=gs3dcreator
+Actions=arreter;
+
+[Desktop Action arreter]
+Name=Arrêter le serveur
+Name[en]=Stop the server
+Exec=gs3dcreator arreter

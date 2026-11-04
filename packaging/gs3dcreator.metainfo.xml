@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>gs3dcreator</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>gs3Dcreator</name>
+  <summary>Découpe de modèles 3D en pièces imprimables</summary>
+  <summary xml:lang="en">Split 3D models into printable parts</summary>
+  <description>
+    <p>gs3Dcreator découpe une figurine ou une statue en pièces imprimables : gabarits de
+    personnage de 2 à 6 pièces, plans de coupe libres, rotules, goujons ou tenons
+    d'assemblage, export STL et 3MF.</p>
+  </description>
+  <launchable type="desktop-id">gs3dcreator.desktop</launchable>
+  <url type="homepage">https://github.com/gsavard/gs3DCreator</url>
+  <developer id="ca.k-trail.gsavard"><name>Guillaume Savard</name></developer>
+  <releases>
+    <release version="2.0.0" date="2026-11-04"><description><p>Réécriture complète en Rust.</p></description></release>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

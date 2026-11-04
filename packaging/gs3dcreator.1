@@ -1,0 +1,79 @@
+.TH GS3DCREATOR 1 "novembre 2026" "gs3dcreator 2.0.0" "Commandes utilisateur"
+.SH NOM
+gs3dcreator \- découpe un modèle 3D en pièces imprimables avec connecteurs d'assemblage
+.SH SYNOPSIS
+.B gs3dcreator
+.RI [ commande ]
+.RI [ options ]
+.SH DESCRIPTION
+.B gs3dcreator
+découpe une figurine, une statue ou tout modèle trop grand pour l'imprimante en pièces qui
+s'impriment à plat et s'emboîtent grâce à des rotules, des goujons ou des tenons.
+Formats acceptés : STL, OBJ, GLB/glTF, PLY, 3MF, OFF.
+.PP
+Sans commande, l'interface web locale est démarrée (si elle ne tourne pas déjà) et ouverte
+dans le navigateur.
+.SH COMMANDES
+.TP
+.B ouvrir
+Ouvre l'interface (action par défaut). Port préféré : 8790.
+.TP
+.BR serveur " [\-\-hote ADRESSE] [\-\-port PORT] [\-\-ouvrir]"
+Démarre le serveur web au premier plan.
+.TP
+.B arreter
+Arrête le serveur démarré par
+.BR ouvrir .
+.TP
+.BI info " modèle"
+Affiche les dimensions, le nombre de triangles et l'étanchéité.
+.TP
+.BI profil " modèle " "[\-\-axe x|y|z] [\-\-pas MM]"
+Affiche les sections tranche par tranche (nombre d'îlots et aire).
+.TP
+.BI decouper " modèle " "[\-s DOSSIER] [\-\-plan PLAN]... [\-\-auto] [\-\-echelle F]"
+Coupe par plans (\fIz=120\fR ou \fInx,ny,nz,px,py,pz\fR) et/ou automatiquement jusqu'à
+entrer dans le volume d'impression. Connecteur par défaut : goujon.
+.TP
+.BI gabarit " modèle " "[\-g 6|5|4a|4b|3|2] [\-s DOSSIER] [\-\-axe auto|x|y|z] [\-\-hauteur MM]"
+Découpe un personnage selon un gabarit, repères détectés automatiquement.
+Connecteur par défaut : rotule.
+.SH OPTIONS D'ASSEMBLAGE
+.TP
+.B \-\-connecteur rotule|goujon|tenon|aucun
+Type de connecteur.
+.TP
+.BI \-\-rayon " MM"
+Rayon du connecteur (2,5 par défaut).
+.TP
+.BI \-\-profondeur " MM"
+Profondeur par côté (6 par défaut).
+.TP
+.BI \-\-jeu " MM"
+Jeu radial (0,2 par défaut).
+.TP
+.BI \-\-paroi " MM"
+Paroi minimale autour d'un trou (1,6 par défaut).
+.TP
+.B \-\-par\-ilot 1|2
+Connecteurs maximum par section (2 = anti-rotation).
+.TP
+.BI \-\-volume " X Y Z"
+Volume d'impression en mm (250 250 250 par défaut).
+.SH FICHIERS
+.TP
+.I ~/.local/state/gs3dcreator/
+Port et PID du serveur démarré par le lanceur.
+.TP
+.I /tmp/gs3dcreator/
+Fichiers de travail de l'interface web.
+.SH EXEMPLES
+.nf
+gs3dcreator gabarit figurine.glb \-g 6 \-\-hauteur 180 \-s sortie/
+gs3dcreator decouper statue.stl \-s sortie/ \-\-plan z=95 \-\-plan z=140
+gs3dcreator decouper statue.stl \-s sortie/ \-\-auto \-\-volume 220 220 250
+.fi
+.SH AUTEUR
+Guillaume Savard.
+.SH VOIR AUSSI
+https://github.com/gsavard/gs3DCreator
