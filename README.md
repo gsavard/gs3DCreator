@@ -24,8 +24,11 @@ Blender.
   plateau, un ZIP de tout, et un aperçu GLB coloré.
 - **Formats acceptés** : STL, OBJ, GLB/glTF, PLY, 3MF, OFF. Réparation automatique (sommets
   fusionnés, faces dégénérées, normales, petits trous).
+- **Image → 3D** : transforme une photo ou une illustration en STL imprimable grâce à ton
+  serveur d’IA local (Hunyuan3D-2, TripoSR, TRELLIS…). Un LLM vision (LM Studio, Ollama,
+  OpenRouter…) peut vérifier l’image avant la génération.
 - **Tout est local** : un seul binaire, aucune dépendance Python, aucun envoi vers Internet
-  (three.js est intégré au binaire).
+  (three.js est intégré au binaire), sauf vers les fournisseurs d’IA que tu configures.
 
 ## Installation
 
@@ -34,13 +37,13 @@ Télécharge le paquet de la [dernière version](https://github.com/gsavard/gs3D
 **Fedora, RHEL, openSUSE (RPM)**
 
 ```bash
-sudo dnf install ./gs3dcreator-2.0.0-1.x86_64.rpm
+sudo dnf install ./gs3dcreator-2.1.0-1.x86_64.rpm
 ```
 
 **Debian, Ubuntu, Mint (DEB)**
 
 ```bash
-sudo apt install ./gs3dcreator_2.0.0-1_amd64.deb
+sudo apt install ./gs3dcreator_2.1.0-1_amd64.deb
 ```
 
 Cherche ensuite **gs3Dcreator** dans le menu des applications. Le binaire est compilé contre
@@ -68,6 +71,9 @@ par défaut. Relancer l’application réutilise le serveur déjà démarré.
    inverse le côté détaché, ajoute ou supprime des coupes.
 4. **Assemblage** : type de connecteur, rayon et jeu, puis **Découper**. Télécharge le 3MF
    ou le ZIP des STL.
+
+L’onglet **Image → 3D** génère un modèle à partir d’une image. Configure d’abord un
+fournisseur avec le bouton ⚙ (voir [Image → 3D dans le guide](docs/GUIDE.md#9-image--3d)).
 
 Le guide détaillé est dans [docs/GUIDE.md](docs/GUIDE.md).
 
@@ -145,6 +151,7 @@ Les versions publiées sont construites par GitHub Actions
 | `src/moteur.rs` | Repères anatomiques, gabarits, coupes localisées, connecteurs, export |
 | `src/cli.rs` | Coupes par plans, découpe automatique, profil |
 | `src/sections.rs` | Sections 2D : îlots, pôle d’inaccessibilité, positions des connecteurs |
+| `src/ia.rs` | Fournisseurs d’IA, génération image → 3D en tâche de fond, conversion en STL |
 | `src/maillage.rs` | Import/export (STL, OBJ, glTF, PLY, 3MF, OFF), réparation, conversions Manifold |
 | `web/` | Interface (HTML + three.js 0.160 intégré) |
 | `packaging/` | Lanceur `.desktop`, métadonnées AppStream, page de manuel |

@@ -6,7 +6,7 @@ Les erreurs renvoient `{"detail": "message"}` avec un code HTTP 400, 404, 409 ou
 ## `GET /api/sante`
 
 ```json
-{"app": "gs3dcreator", "version": "2.0.0"}
+{"app": "gs3dcreator", "version": "2.1.0"}
 ```
 
 Sert au lanceur à reconnaître l’application sur un port.
@@ -91,4 +91,88 @@ jq '{coupes: .coupes["6"], connecteur: "rotule"}' prep.json |
   curl -s -H 'Content-Type: application/json' -d @- \
      http://127.0.0.1:8790/api/modeles/$ID/decouper | jq .
 curl -s -O http://127.0.0.1:8790/api/modeles/$ID/resultat/figurine_pieces.zip
+```
+
+## Image → 3D
+
+### `GET /api/fournisseurs`
+
+```json
+{
+  "fournisseurs": [
+    {"id": "e987c91d", "nom": "Hunyuan local", "type": "hunyuan3d", "famille": "image3d",
+     "url": "http://127.0.0.1:8081", "modele": "", "delai": 900, "cle_definie": false}
+  ],
+  "types": [{"cle": "hunyuan3d", "nom": "…", "famille": "image3d", "url_defaut": "…", "cle_requise": false, "aide": "…"}, "…"]
+}
+```
+
+Types : `hunyuan3d`, `generique` (famille `image3d`); `lmstudio`, `ollama`, `openrouter`,
+`openai` (famille `llm`). La clé n’est jamais renvoyée.
+
+### `POST /api/fournisseurs`
+
+Crée (sans `id`) ou met à jour (avec `id`) un fournisseur. Une `cle` vide conserve la clé
+existante.
+
+```json
+{"id": "", "type": "ollama", "nom": "Ollama", "url": "http://127.0.0.1:11434/v1",
+ "cle": "", "modele": "qwen2.5vl", "delai": 900}
+```
+
+### `DELETE /api/fournisseurs/{id}`
+
+### `POST /api/fournisseurs/{id}/tester`
+
+```json
+{"message": "Connexion réussie : 2 modèle(s).", "modeles": ["llava", "qwen2.5vl"]}
+```
+
+### `POST /api/images/analyser`
+
+Formulaire : `image`, `fournisseur` (un LLM), `question` (facultatif).
+
+```json
+{"texte": "1) Une figurine de gobelin…", "modele": "qwen2.5vl"}
+```
+
+### `POST /api/images`
+
+Formulaire : `image` (PNG, JPG, WEBP; 20 Mo max.), `fournisseur` (image→3D), `options`
+(JSON, tous les champs facultatifs) :
+
+```json
+{"hauteur": 150, "axe": "auto", "socle": false, "graine": 1234, "resolution": 256,
+ "etapes": 30, "guidage": 5.0, "retirer_fond": true}
+```
+
+Réponse immédiate : `{"id": "efb20be66c6f"}`. La génération continue en arrière-plan.
+
+### `GET /api/images/{id}` et `GET /api/images`
+
+`etat` : `attente`, `generation`, `conversion`, `termine` ou `erreur` (détail dans `message`).
+
+```json
+{
+  "id": "efb20be66c6f", "nom": "gobelin", "fournisseur": "Hunyuan local",
+  "etat": "termine", "message": "Modèle prêt.", "duree": 74.2,
+  "resultat": {"axe": "y", "dims": [61.3, 48.0, 150.0], "triangles": 412880, "etanche": true, "stl": "gobelin.stl"},
+  "image": "/api/images/efb20be66c6f/fichier/image.png",
+  "apercu": "/api/images/efb20be66c6f/fichier/apercu.glb",
+  "stl": "/api/images/efb20be66c6f/fichier/gobelin.stl"
+}
+```
+
+`GET /api/images` renvoie `{"generations": [...]}`, la plus récente en premier.
+
+### Exemple avec curl
+
+```bash
+F=$(curl -s -H 'Content-Type: application/json' \
+     -d '{"type":"hunyuan3d","url":"http://127.0.0.1:8081"}' \
+     http://127.0.0.1:8790/api/fournisseurs | jq -r .id)
+ID=$(curl -s -F image=@gobelin.png -F fournisseur=$F -F 'options={"hauteur":120}' \
+     http://127.0.0.1:8790/api/images | jq -r .id)
+until [ "$(curl -s http://127.0.0.1:8790/api/images/$ID | jq -r .etat)" = termine ]; do sleep 5; done
+curl -s -O http://127.0.0.1:8790/api/images/$ID/fichier/gobelin.stl
 ```

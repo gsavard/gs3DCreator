@@ -107,6 +107,76 @@ main.trace #vue{cursor:crosshair}
 .dl.s{border:1px solid var(--trait);color:var(--texte)}
 #erreur{color:var(--alerte);font-size:13px;margin-top:8px;min-height:1em}
 
+/* ---------------------------------------------------------------- onglets et image → 3D */
+.onglets{display:flex;gap:4px;background:var(--creux);border:1px solid var(--trait);border-radius:10px;padding:3px;margin:0 0 18px}
+.onglets button{flex:1;background:none;border:0;border-radius:7px;padding:7px 6px;font-size:13.5px;cursor:pointer;color:var(--doux)}
+.onglets button[aria-selected=true]{background:var(--panneau);color:var(--texte);box-shadow:0 0 0 1px var(--trait)}
+.onglets button.reglage{flex:0 0 auto;padding:7px 10px}
+[hidden]{display:none!important}
+#depot-img{display:block;border:1.5px dashed var(--trait);border-radius:10px;background:var(--creux);
+  padding:18px 14px;text-align:center;cursor:pointer;transition:border-color .15s;min-height:150px;position:relative}
+#depot-img:hover,#depot-img.survol{border-color:var(--pei)}
+#depot-img input{display:none}
+#depot-img strong{display:block;font-weight:600;margin-top:34px}
+#depot-img span{color:var(--doux);font-size:13px}
+#depot-img img{max-width:100%;max-height:220px;border-radius:6px;display:block;margin:0 auto}
+#depot-img.plein{padding:8px}
+#depot-img.plein strong,#depot-img.plein span{display:none}
+.choix{display:flex;gap:6px;margin-top:8px}
+.choix button{flex:1;background:var(--creux);border:1px solid var(--trait);border-radius:7px;padding:6px 4px;font-size:12.5px;cursor:pointer;line-height:1.2}
+.choix button small{display:block;color:var(--doux);font-size:11px}
+.choix button[aria-pressed=true]{border-color:var(--pei);color:var(--pei)}
+.case{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--doux);margin-top:10px;cursor:pointer}
+.case input{accent-color:var(--pei)}
+details.avance{margin-top:12px;font-size:13px}
+details.avance summary{cursor:pointer;color:var(--doux)}
+#analyse{background:var(--creux);border:1px solid var(--trait);border-radius:8px;padding:9px 11px;font-size:13px;white-space:pre-wrap;margin-top:8px;max-height:220px;overflow:auto}
+.sec{background:none;border:1px solid var(--trait);border-radius:7px;padding:6px 10px;font-size:13px;cursor:pointer;color:var(--texte)}
+.sec:hover{border-color:var(--doux)}
+.sec:disabled{opacity:.5;cursor:wait}
+#gen-img{width:100%;margin-top:14px;padding:13px;border:0;border-radius:10px;background:linear-gradient(90deg,var(--pei),var(--violet));color:#121418;
+  font-weight:700;font-size:16px;cursor:pointer}
+#gen-img:disabled{background:var(--trait);color:var(--doux);cursor:wait}
+#err-img{color:var(--alerte);font-size:13px;margin-top:8px;min-height:1em}
+.vide-four{background:rgba(95,212,236,.08);border-left:3px solid var(--pei);padding:8px 10px;font-size:13px;border-radius:0 6px 6px 0;margin-top:8px}
+
+#historique{position:absolute;top:14px;right:14px;bottom:14px;width:290px;background:var(--panneau);
+  border:1px solid var(--trait);border-radius:12px;padding:16px;overflow-y:auto}
+#historique h3{margin:0 0 10px;font-size:16px}
+.gen{display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;padding:8px;border:1.5px solid transparent;border-radius:9px;cursor:pointer;font-size:13px}
+.gen:hover{background:var(--creux)}
+.gen.sel{border-color:var(--pei);background:var(--creux)}
+.gen img{width:52px;height:52px;object-fit:cover;border-radius:6px;background:var(--creux)}
+.gen small{display:block;color:var(--doux)}
+.gen .err{color:var(--alerte)}
+.fiche{margin-top:12px;border-top:1px solid var(--trait);padding-top:12px;font-size:13px}
+.fiche dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0}
+.fiche dt{color:var(--doux)}
+.fiche dd{margin:0;font-variant-numeric:tabular-nums}
+.barre{height:4px;background:var(--creux);border-radius:2px;overflow:hidden;margin-top:6px}
+.barre i{display:block;height:100%;width:35%;background:linear-gradient(90deg,var(--pei),var(--violet));animation:va 1.4s ease-in-out infinite}
+@keyframes va{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
+
+dialog{background:var(--panneau);color:var(--texte);border:1px solid var(--trait);border-radius:14px;padding:0;width:min(720px,94vw);max-height:90vh}
+dialog::backdrop{background:rgba(10,11,13,.6)}
+.dlg{display:grid;grid-template-columns:220px 1fr;min-height:420px}
+.dlg nav{border-right:1px solid var(--trait);padding:16px 10px;display:flex;flex-direction:column;gap:4px;overflow:auto}
+.dlg nav h4{margin:10px 6px 4px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--doux);font-weight:600}
+.dlg nav button{text-align:left;background:none;border:1.5px solid transparent;border-radius:8px;padding:7px 9px;font-size:13.5px;cursor:pointer}
+.dlg nav button small{display:block;color:var(--doux);font-size:11.5px}
+.dlg nav button.sel{border-color:var(--pei);background:var(--creux)}
+.dlg form{padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.dlg form h3{margin:0;font-size:17px;display:flex;justify-content:space-between;align-items:center}
+.dlg form label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--doux)}
+.dlg input,.dlg select{background:var(--creux);border:1px solid var(--trait);border-radius:6px;padding:7px 8px;color:var(--texte)}
+.dlg .actions{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}
+.dlg .actions .p{background:var(--pei);color:#121418;border:0;font-weight:600}
+.dlg .actions .danger{margin-left:auto;color:var(--alerte)}
+#f-aide{font-size:12.5px;color:var(--doux);margin:0}
+#f-msg{font-size:13px;min-height:1.2em;margin:0}
+#f-msg.ok{color:#7fd48a} #f-msg.ko{color:var(--alerte)}
+.fermer{background:none;border:0;font-size:22px;line-height:1;cursor:pointer;color:var(--doux)}
+@media (max-width:820px){#historique{position:static;width:auto;margin:10px}.dlg{grid-template-columns:1fr}.dlg nav{border-right:0;border-bottom:1px solid var(--trait)}}
 @media (max-width:820px){body{grid-template-columns:1fr;grid-template-rows:auto 60vh;overflow:auto}
   aside{border-right:0}#resultat{position:static;width:auto;margin:10px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -119,7 +189,15 @@ main.trace #vue{cursor:crosshair}
 <body>
 <aside>
   <h1><img src="/icone.png" alt=""><span>gs<em>3D</em>creator</span><span class="version" id="version"></span></h1>
-  <p class="sous">Découpe une figurine en pièces imprimables, avec rotules, goujons ou tenons d’assemblage.</p>
+  <p class="sous" id="sous">Découpe une figurine en pièces imprimables, avec rotules, goujons ou tenons d’assemblage.</p>
+
+  <div class="onglets" role="tablist">
+    <button type="button" role="tab" id="o-decoupe" aria-selected="true">Découpe</button>
+    <button type="button" role="tab" id="o-image" aria-selected="false">Image → 3D</button>
+    <button type="button" class="reglage" id="o-four" title="Fournisseurs IA" aria-label="Fournisseurs IA">⚙</button>
+  </div>
+
+  <div id="p-decoupe">
 
   <section class="etape" id="e1">
     <h2><b>1</b>Modèle</h2>
@@ -175,6 +253,60 @@ main.trace #vue{cursor:crosshair}
     <button id="generer" type="button" style="margin-top:16px">Découper</button>
     <div id="erreur" role="alert"></div>
   </section>
+  </div>
+
+  <div id="p-image" hidden>
+    <section class="etape">
+      <h2><b>1</b>Image</h2>
+      <label id="depot-img" tabindex="0">
+        <input type="file" id="f-image" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp">
+        <strong>Dépose une image ou clique ici</strong>
+        <span>JPG, PNG, WEBP · 20 Mo max.</span>
+        <img id="vignette" alt="" hidden>
+      </label>
+      <p class="aide">Un seul sujet entier, vu de face ou de trois quarts, sur un fond simple. Le fond est retiré automatiquement.</p>
+    </section>
+
+    <section class="etape">
+      <h2><b>2</b>Moteur 3D</h2>
+      <div class="ligne" style="margin-top:0"><label>Serveur image → 3D<select id="moteur"></select></label></div>
+      <div id="sans-moteur" class="vide-four" hidden>Aucun serveur image→3D configuré. <button class="reinit" type="button" data-four>Ajouter un fournisseur</button></div>
+      <details class="avance" id="bloc-analyse">
+        <summary>Vérifier l’image avec un LLM vision (facultatif)</summary>
+        <div class="ligne"><label>Modèle de langage<select id="llm"></select></label></div>
+        <div class="ligne"><button class="sec" type="button" id="analyser">Analyser l’image</button></div>
+        <div id="analyse" hidden></div>
+      </details>
+    </section>
+
+    <section class="etape">
+      <h2><b>3</b>Réglages</h2>
+      <div class="choix" id="qualite">
+        <button type="button" data-q="rapide" aria-pressed="false">Rapide<small>128 · 5 étapes</small></button>
+        <button type="button" data-q="standard" aria-pressed="true">Standard<small>256 · 30 étapes</small></button>
+        <button type="button" data-q="detail" aria-pressed="false">Détail<small>384 · 50 étapes</small></button>
+      </div>
+      <div class="ligne">
+        <label>Hauteur (mm)<input type="number" id="i-hauteur" value="150" min="5" max="2000" step="5"></label>
+        <label>Axe vertical<select id="i-axe"><option value="auto">Auto</option><option value="y">Y</option><option value="z">Z</option></select></label>
+      </div>
+      <label class="case"><input type="checkbox" id="i-socle"> Ajouter un socle de 3 mm</label>
+      <details class="avance">
+        <summary>Avancé</summary>
+        <div class="ligne">
+          <label>Graine<input type="number" id="i-graine" value="1234" min="0" step="1"></label>
+          <label>Guidage<input type="number" id="i-guidage" value="5" min="0.1" max="20" step="0.5"></label>
+        </div>
+        <div class="ligne">
+          <label>Résolution<input type="number" id="i-res" value="256" min="64" max="512" step="32"></label>
+          <label>Étapes<input type="number" id="i-etapes" value="30" min="1" max="100" step="1"></label>
+        </div>
+        <label class="case"><input type="checkbox" id="i-fond" checked> Retirer l’arrière-plan</label>
+      </details>
+      <button id="gen-img" type="button">Générer le modèle 3D</button>
+      <div id="err-img" role="alert"></div>
+    </section>
+  </div>
 </aside>
 
 <main>
@@ -188,7 +320,30 @@ main.trace #vue{cursor:crosshair}
   </div>
   <div id="charge"><span id="charge-txt">Chargement…</span></div>
   <div id="resultat"></div>
+  <div id="historique" hidden><h3>Historique</h3><div id="gens"></div><div id="fiche"></div></div>
 </main>
+
+<dialog id="dlg-four">
+  <div class="dlg">
+    <nav id="four-liste"></nav>
+    <form id="four-form" method="dialog">
+      <h3><span id="f-titre">Nouveau fournisseur</span><button class="fermer" type="button" id="f-fermer" aria-label="Fermer">×</button></h3>
+      <label>Type<select id="f-type"></select></label>
+      <p id="f-aide"></p>
+      <label>Nom<input id="f-nom" autocomplete="off"></label>
+      <label>Adresse<input id="f-url" autocomplete="off" spellcheck="false"></label>
+      <label id="l-cle">Clé API<input id="f-cle" type="password" autocomplete="off" placeholder="Laisser vide pour conserver"></label>
+      <label id="l-modele">Modèle<input id="f-modele" list="f-modeles" autocomplete="off" placeholder="Bouton Tester pour lister les modèles"><datalist id="f-modeles"></datalist></label>
+      <label>Délai maximal (s)<input id="f-delai" type="number" min="30" max="7200" step="30" value="900"></label>
+      <p id="f-msg"></p>
+      <div class="actions">
+        <button class="sec p" type="button" id="f-enreg">Enregistrer</button>
+        <button class="sec" type="button" id="f-tester">Tester</button>
+        <button class="sec danger" type="button" id="f-suppr">Supprimer</button>
+      </div>
+    </form>
+  </div>
+</dialog>
 
 <script type="module">
 import * as THREE from 'three';
@@ -442,7 +597,7 @@ function appliquerTrace(a, b){
   construireListe(); dessinerPlans(); choisir(sel); mode('translate');
 }
 addEventListener('keydown', e => {
-  if (e.target.matches('input,select')) return;
+  if (e.target.matches('input,select') || $('p-decoupe').hidden || $('dlg-four').open) return;
   if (e.key === 't' || e.key === 'T') mode('translate');
   if (e.key === 'r' || e.key === 'R') mode('rotate');
   if (e.key === 'd' || e.key === 'D') mode(traceOn ? 'translate' : 'trace');
@@ -534,6 +689,241 @@ depot.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefa
 ['dragleave','drop'].forEach(t => depot.addEventListener(t, e => { e.preventDefault(); depot.classList.remove('survol'); }));
 depot.addEventListener('drop', e => e.dataTransfer.files[0] && televerser(e.dataTransfer.files[0]));
 $('appliquer').onclick = preparer;
+// ================================================================ image → 3D
+let ongletCourant = 'decoupe', genere = null, gens = [], genSel = null, imageFichier = null, four = {fournisseurs: [], types: []};
+function onglet(o){
+  ongletCourant = o;
+  $('o-decoupe').setAttribute('aria-selected', o === 'decoupe');
+  $('o-image').setAttribute('aria-selected', o === 'image');
+  $('p-decoupe').hidden = o !== 'decoupe'; $('p-image').hidden = o !== 'image';
+  $('sous').textContent = o === 'image' ? 'Transforme une image en modèle 3D imprimable (STL), avec ton serveur d’IA.'
+    : 'Découpe une figurine en pièces imprimables, avec rotules, goujons ou tenons d’assemblage.';
+  const img = o === 'image';
+  gizmo.detach();
+  if (modele) modele.visible = !img;
+  plans.visible = !img && !!etat;
+  if (pieces) pieces.visible = false;
+  if (genere) genere.visible = img;
+  $('historique').hidden = !img;
+  $('outils').hidden = img || !etat;
+  $('resultat').classList.remove('on');
+  const vide = $('vide');
+  if (img) {
+    vide.hidden = !!genere;
+    vide.innerHTML = '<p><strong>Image → 3D</strong>Téléverse une image, choisis ton serveur et lance la génération.</p>';
+  } else {
+    vide.hidden = !!etat;
+    vide.innerHTML = '<p><strong>Aucun modèle</strong>Téléverse une figurine pour voir les plans de coupe proposés.</p>';
+    if (etat) vue('plans');
+  }
+  if (img) chargerFournisseurs();
+}
+$('o-decoupe').onclick = () => onglet('decoupe');
+$('o-image').onclick = () => onglet('image');
+
+function errImg(m){ $('err-img').textContent = m || ''; }
+async function json(url, opts){
+  const r = await fetch(url, opts);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || `Erreur ${r.status}`);
+  return j;
+}
+const echapper = t => String(t ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ---- image source
+const dImg = $('depot-img');
+function choisirImage(f){
+  if (!f) return;
+  if (!/\.(png|jpe?g|webp)$/i.test(f.name)) { errImg('Image PNG, JPG ou WEBP seulement.'); return; }
+  if (f.size > 20 * 1024 * 1024) { errImg('Image trop lourde (20 Mo maximum).'); return; }
+  errImg(); imageFichier = f;
+  const v = $('vignette'); v.src = URL.createObjectURL(f); v.hidden = false; dImg.classList.add('plein');
+  $('analyse').hidden = true;
+}
+$('f-image').onchange = e => choisirImage(e.target.files[0]);
+dImg.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('f-image').click(); } };
+['dragenter','dragover'].forEach(t => dImg.addEventListener(t, e => { e.preventDefault(); dImg.classList.add('survol'); }));
+['dragleave','drop'].forEach(t => dImg.addEventListener(t, e => { e.preventDefault(); dImg.classList.remove('survol'); }));
+dImg.addEventListener('drop', e => choisirImage(e.dataTransfer.files[0]));
+addEventListener('paste', e => {
+  if (ongletCourant !== 'image') return;
+  const f = [...(e.clipboardData?.files || [])].find(x => x.type.startsWith('image/'));
+  if (f) choisirImage(new File([f], f.name && f.name !== 'image.png' ? f.name : 'collage.png', {type: f.type}));
+});
+
+// ---- qualité
+const QUAL = {rapide: [128, 5], standard: [256, 30], detail: [384, 50]};
+$('qualite').querySelectorAll('button').forEach(b => b.onclick = () => {
+  $('qualite').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  [$('i-res').value, $('i-etapes').value] = QUAL[b.dataset.q];
+});
+
+// ---- fournisseurs
+async function chargerFournisseurs(){
+  try { four = await json('/api/fournisseurs'); } catch (e) { errImg(e.message); return; }
+  const remplir = (sel, fam, vide) => {
+    const avant = sel.value;
+    const l = four.fournisseurs.filter(f => f.famille === fam);
+    sel.innerHTML = l.length ? l.map(f => `<option value="${f.id}">${echapper(f.nom)}${f.modele ? ' · ' + echapper(f.modele) : ''}</option>`).join('')
+      : `<option value="">${vide}</option>`;
+    if (l.some(f => f.id === avant)) sel.value = avant;
+    return l.length;
+  };
+  const n3d = remplir($('moteur'), 'image3d', 'Aucun serveur configuré');
+  remplir($('llm'), 'llm', 'Aucun LLM configuré');
+  $('sans-moteur').hidden = n3d > 0;
+}
+
+let fSel = null;
+function ouvrirFournisseurs(id){
+  $('dlg-four').showModal();
+  json('/api/fournisseurs').then(j => { four = j; listeFour(); editer(id ?? four.fournisseurs[0]?.id ?? null); });
+}
+function listeFour(){
+  const nav = $('four-liste');
+  const groupe = (fam, titre) => {
+    const l = four.fournisseurs.filter(f => f.famille === fam);
+    return `<h4>${titre}</h4>` + (l.map(f => `<button type="button" data-id="${f.id}" class="${f.id === fSel ? 'sel' : ''}">${echapper(f.nom)}<small>${echapper(f.url)}</small></button>`).join('')
+      || '<small style="color:var(--doux);padding:0 8px;font-size:12px">Aucun</small>');
+  };
+  nav.innerHTML = groupe('image3d', 'Image → 3D') + groupe('llm', 'Modèles de langage')
+    + '<button type="button" data-id="" style="margin-top:10px;color:var(--pei)">+ Ajouter un fournisseur</button>';
+  nav.querySelectorAll('button').forEach(b => b.onclick = () => editer(b.dataset.id || null));
+}
+function typesOptions(){
+  const g = fam => four.types.filter(t => t.famille === fam).map(t => `<option value="${t.cle}">${t.nom}</option>`).join('');
+  $('f-type').innerHTML = `<optgroup label="Image → 3D (génère le maillage)">${g('image3d')}</optgroup><optgroup label="Modèles de langage (analyse d’image)">${g('llm')}</optgroup>`;
+}
+function majType(changeUrl){
+  const t = four.types.find(x => x.cle === $('f-type').value);
+  if (!t) return;
+  $('f-aide').textContent = t.aide;
+  $('l-modele').hidden = t.famille !== 'llm';
+  $('l-cle').firstChild.textContent = t.cle_requise ? 'Clé API (requise)' : 'Clé API (facultative)';
+  if (changeUrl) { $('f-url').value = t.url_defaut; $('f-nom').value = t.nom.replace(/ \(.*\)$/, ''); }
+}
+function editer(id){
+  fSel = id; typesOptions(); listeFour();
+  const f = four.fournisseurs.find(x => x.id === id);
+  $('f-titre').textContent = f ? f.nom : 'Nouveau fournisseur';
+  $('f-msg').textContent = ''; $('f-msg').className = '';
+  $('f-modeles').innerHTML = '';
+  if (f) {
+    $('f-type').value = f.type; $('f-nom').value = f.nom; $('f-url').value = f.url;
+    $('f-modele').value = f.modele || ''; $('f-delai').value = f.delai; $('f-cle').value = '';
+    $('f-cle').placeholder = f.cle_definie ? 'Clé enregistrée · laisser vide pour la conserver' : 'Aucune clé';
+    majType(false);
+  } else {
+    $('f-type').value = 'hunyuan3d'; $('f-modele').value = ''; $('f-delai').value = 900; $('f-cle').value = '';
+    $('f-cle').placeholder = 'Aucune clé'; majType(true);
+  }
+  $('f-suppr').hidden = !f;
+}
+$('f-type').onchange = () => majType(true);
+function msgFour(t, ok){ $('f-msg').textContent = t; $('f-msg').className = ok ? 'ok' : 'ko'; }
+async function enregistrerFour(){
+  const corps = {id: fSel || '', type: $('f-type').value, nom: $('f-nom').value, url: $('f-url').value,
+    cle: $('f-cle').value, modele: $('f-modele').value.trim(), delai: +$('f-delai').value || 900};
+  const f = await json('/api/fournisseurs', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(corps)});
+  four = await json('/api/fournisseurs');
+  fSel = f.id; listeFour(); $('f-titre').textContent = f.nom; $('f-suppr').hidden = false;
+  $('f-cle').value = ''; $('f-cle').placeholder = f.cle_definie ? 'Clé enregistrée · laisser vide pour la conserver' : 'Aucune clé';
+  chargerFournisseurs();
+  return f;
+}
+$('f-enreg').onclick = async () => { try { await enregistrerFour(); msgFour('Enregistré.', true); } catch (e) { msgFour(e.message); } };
+$('f-tester').onclick = async () => {
+  const b = $('f-tester'); b.disabled = true; msgFour('Test en cours…', true);
+  try {
+    const f = await enregistrerFour();
+    const r = await json(`/api/fournisseurs/${f.id}/tester`, {method: 'POST'});
+    $('f-modeles').innerHTML = r.modeles.map(m => `<option value="${echapper(m)}">`).join('');
+    if (r.modeles.length && !$('f-modele').value) { $('f-modele').value = r.modeles[0]; await enregistrerFour(); }
+    msgFour(r.message + (r.modeles.length ? ' Choisis le modèle dans la liste.' : ''), true);
+  } catch (e) { msgFour(e.message); }
+  b.disabled = false;
+};
+$('f-suppr').onclick = async () => {
+  if (!fSel) return;
+  try { await json(`/api/fournisseurs/${fSel}`, {method: 'DELETE'}); four = await json('/api/fournisseurs'); editer(four.fournisseurs[0]?.id ?? null); chargerFournisseurs(); }
+  catch (e) { msgFour(e.message); }
+};
+$('f-fermer').onclick = () => $('dlg-four').close();
+$('o-four').onclick = () => ouvrirFournisseurs();
+document.querySelectorAll('[data-four]').forEach(b => b.onclick = () => ouvrirFournisseurs(null));
+
+// ---- analyse LLM
+$('analyser').onclick = async () => {
+  if (!imageFichier) { errImg('Choisis d’abord une image.'); return; }
+  if (!$('llm').value) { ouvrirFournisseurs(null); return; }
+  const b = $('analyser'); b.disabled = true; errImg();
+  const z = $('analyse'); z.hidden = false; z.textContent = 'Analyse en cours…';
+  try {
+    const fd = new FormData(); fd.append('fournisseur', $('llm').value); fd.append('image', imageFichier);
+    const r = await json('/api/images/analyser', {method: 'POST', body: fd});
+    z.textContent = r.texte;
+  } catch (e) { z.textContent = ''; z.hidden = true; errImg(e.message); }
+  b.disabled = false;
+};
+
+// ---- génération
+$('gen-img').onclick = async () => {
+  if (!imageFichier) { errImg('Choisis d’abord une image.'); return; }
+  if (!$('moteur').value) { ouvrirFournisseurs(null); return; }
+  errImg(); $('gen-img').disabled = true;
+  const options = {hauteur: +$('i-hauteur').value || 150, axe: $('i-axe').value, socle: $('i-socle').checked,
+    graine: +$('i-graine').value || 0, guidage: +$('i-guidage').value || 5, resolution: +$('i-res').value || 256,
+    etapes: +$('i-etapes').value || 30, retirer_fond: $('i-fond').checked};
+  try {
+    const fd = new FormData();
+    fd.append('fournisseur', $('moteur').value); fd.append('options', JSON.stringify(options)); fd.append('image', imageFichier);
+    const r = await json('/api/images', {method: 'POST', body: fd});
+    genSel = r.id; await rafraichir();
+  } catch (e) { errImg(e.message); }
+  $('gen-img').disabled = false;
+};
+
+const ETATS = {attente: 'En attente', generation: 'Génération', conversion: 'Conversion', termine: 'Prêt', erreur: 'Échec'};
+let sondage = null, apercuCharge = null;
+async function rafraichir(){
+  try { gens = (await json('/api/images')).generations; } catch { return; }
+  $('gens').innerHTML = gens.length ? gens.map(g => `<div class="gen ${g.id === genSel ? 'sel' : ''}" data-id="${g.id}" tabindex="0">
+      <img src="${g.image || ''}" alt="">
+      <span>${echapper(g.nom)}<small class="${g.etat === 'erreur' ? 'err' : ''}">${ETATS[g.etat] || g.etat} · ${Math.round(g.duree)} s</small>
+      ${['attente','generation','conversion'].includes(g.etat) ? '<div class="barre"><i></i></div>' : ''}</span></div>`).join('')
+    : '<p class="aide">Les modèles générés pendant cette session apparaissent ici.</p>';
+  $('gens').querySelectorAll('.gen').forEach(el => { el.onclick = () => { genSel = el.dataset.id; rafraichir(); }; el.onkeydown = e => { if (e.key === 'Enter') el.click(); }; });
+  const g = gens.find(x => x.id === genSel);
+  fiche(g);
+  if (g?.etat === 'termine' && apercuCharge !== g.id) montrerGenere(g);
+  const actif = gens.some(x => ['attente','generation','conversion'].includes(x.etat));
+  clearTimeout(sondage); if (actif) sondage = setTimeout(rafraichir, 1500);
+}
+function fiche(g){
+  const z = $('fiche');
+  if (!g) { z.innerHTML = ''; return; }
+  if (g.etat === 'erreur') { z.innerHTML = `<div class="fiche"><div class="avert">${echapper(g.message)}</div></div>`; return; }
+  if (g.etat !== 'termine') { z.innerHTML = `<div class="fiche"><p class="aide">${echapper(g.message)}<br>Fournisseur : ${echapper(g.fournisseur)}</p></div>`; return; }
+  const r = g.resultat;
+  z.innerHTML = `<div class="fiche"><dl>
+      <dt>Dimensions</dt><dd>${r.dims.join(' × ')} mm</dd>
+      <dt>Triangles</dt><dd>${r.triangles.toLocaleString('fr-CA')}</dd>
+      <dt>Durée</dt><dd>${g.duree} s</dd>
+      <dt>Moteur</dt><dd>${echapper(g.fournisseur)}</dd></dl>
+    ${r.etanche ? '' : '<div class="avert">Le maillage n’est pas parfaitement étanche. La plupart des trancheurs le réparent à l’import.</div>'}
+    <a class="dl p" href="${g.stl}" download>Télécharger le STL</a></div>`;
+}
+async function montrerGenere(g){
+  apercuCharge = g.id;
+  try {
+    const obj = await charger(g.apercu);
+    if (genere) scene.remove(genere);
+    obj.traverse(o => { if (o.isMesh) { o.geometry.computeVertexNormals(); o.material = new THREE.MeshStandardMaterial({color: 0xbab5ab, roughness: .7}); } });
+    genere = obj; genere.visible = ongletCourant === 'image'; scene.add(genere);
+    if (ongletCourant === 'image') { $('vide').hidden = true; cadrer(g.resultat.dims[2]); }
+  } catch (e) { errImg('Aperçu impossible : ' + e.message); apercuCharge = null; }
+}
+rafraichir();
 fetch('/api/sante').then(r => r.json()).then(j => $('version').textContent = 'v' + j.version).catch(() => {});
 </script>
 </body>

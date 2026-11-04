@@ -155,3 +155,92 @@ Profil selon Z (haut en bas) — îlots = morceaux séparés dans la tranche
 | Pas de rotule sur un membre fin | La section est trop petite pour une boule de 2 mm + jeu + paroi : prends des goujons plus fins ou aucun connecteur. |
 | L’interface ne s’ouvre pas | Lance `gs3dcreator serveur --ouvrir` dans un terminal pour voir les messages. |
 | Le port 8790 est pris | Un port libre est choisi automatiquement. |
+
+## 9. Image → 3D
+
+L’onglet **Image → 3D** transforme une image en modèle 3D imprimable (STL), à la manière
+de la génération 3D de Hi3D. gs3Dcreator ne contient pas de modèle d’IA : il se connecte au
+serveur que tu fais tourner (sur ta machine ou un poste avec GPU).
+
+### Deux familles de fournisseurs
+
+| Famille | Exemples | Rôle |
+|---|---|---|
+| **Image → 3D** | Hunyuan3D-2 / 2.1, TripoSR, Stable Fast 3D, TRELLIS | Produit le maillage. **Obligatoire.** |
+| **Modèle de langage** | LM Studio, Ollama, OpenRouter, vLLM, OpenAI… | Analyse l’image avant la génération. Facultatif. |
+
+Un LLM (même vision) ne produit pas de maillage : il décrit l’image et signale les
+problèmes (sujet coupé, fond chargé, éléments fins). La forme 3D vient toujours d’un
+modèle image→3D dédié.
+
+### Configurer un fournisseur
+
+Bouton **⚙** à côté des onglets, puis **Ajouter un fournisseur** :
+
+| Type | Adresse par défaut | Remarques |
+|---|---|---|
+| Hunyuan3D-2 / 2.1 | `http://127.0.0.1:8081` | Dans le dépôt Tencent : `python api_server.py --port 8081`. GPU NVIDIA requis (≈ 6 Go pour 2mini, plus pour 2.1). |
+| Générique (HTTP) | `http://127.0.0.1:8000/generate` | Voir le contrat ci-dessous. |
+| LM Studio | `http://127.0.0.1:1234/v1` | Active le serveur dans l’onglet Developer; charge un modèle vision (Qwen2.5-VL, Gemma 3…). |
+| Ollama | `http://127.0.0.1:11434/v1` | `ollama pull qwen2.5vl` (ou `llava`, `gemma3`). |
+| OpenRouter | `https://openrouter.ai/api/v1` | Clé API requise; choisis un modèle qui accepte les images. |
+| Autre (compatible OpenAI) | — | Tout point d’accès `/v1/chat/completions`. |
+
+**Tester** enregistre le fournisseur, vérifie la connexion et, pour un LLM, liste les
+modèles disponibles. La configuration est dans `~/.config/gs3dcreator/fournisseurs.json`
+(droits 600). Les clés ne sont jamais renvoyées au navigateur : laisse le champ vide pour
+conserver la clé enregistrée.
+
+Si le serveur d’IA tourne sur une autre machine (ex. un poste GPU), mets son adresse
+réseau (`http://192.168.x.y:8081`) et assure-toi qu’il écoute sur `0.0.0.0`.
+
+### Générer
+
+1. **Image** : dépose, choisis ou colle (Ctrl+V) une image PNG, JPG ou WEBP (20 Mo max.).
+   Idéalement un seul sujet entier, vu de face ou de trois quarts, sur un fond uni.
+2. **Moteur 3D** : choisis le serveur. Facultatif : ouvre « Vérifier l’image avec un LLM
+   vision » et clique **Analyser l’image**.
+3. **Réglages** :
+   - **Qualité** : Rapide (résolution 128, 5 étapes, pour les modèles « turbo »), Standard
+     (256, 30), Détail (384, 50). Plus c’est élevé, plus c’est long et détaillé.
+   - **Hauteur** finale en mm et **axe vertical** (Auto convient aux GLB produits par l’IA).
+   - **Socle** : ajoute un disque de 3 mm sous le modèle (si le maillage est étanche).
+   - **Avancé** : graine (change la variante), guidage, résolution, étapes, retrait du fond.
+4. **Générer le modèle 3D**. La génération tourne en arrière-plan; l’historique à droite
+   montre l’état. Une fois prêt, le modèle s’affiche et **Télécharger le STL** devient
+   disponible.
+
+Le maillage reçu est réparé (sommets fusionnés, normales, petits trous), redressé, mis à
+l’échelle et posé sur le plateau. Pour le découper ensuite, télécharge le STL et ouvre-le
+dans l’onglet **Découpe**.
+
+Avec Hunyuan3D-2.1, seule l’image est prise en compte par le serveur : les réglages de
+qualité sont ignorés (limite du serveur de Tencent, pas de gs3Dcreator).
+
+### Contrat du serveur générique
+
+gs3Dcreator envoie un `POST multipart/form-data` à l’adresse configurée :
+
+| Champ | Contenu |
+|---|---|
+| `image` | le fichier image |
+| `seed`, `resolution`, `steps`, `guidance_scale`, `remove_background` | réglages (texte) |
+
+Réponses acceptées :
+
+- le fichier 3D directement (GLB, OBJ, STL ou PLY; le format est détecté);
+- du JSON avec `model_base64` (ou `glb_base64`, `mesh_base64`) contenant le fichier;
+- du JSON avec `url` (absolue ou relative au serveur) vers le fichier à télécharger.
+
+Un petit serveur FastAPI autour de TripoSR ou Stable Fast 3D suffit pour respecter ce
+contrat. Un en-tête `Authorization: Bearer <clé>` est envoyé si une clé est définie.
+
+### Dépannage Image → 3D
+
+| Symptôme | Piste |
+|---|---|
+| « Impossible de joindre … » | Le serveur d’IA n’est pas démarré, ou il écoute sur `127.0.0.1` d’une autre machine. |
+| « Délai dépassé » | Augmente le délai du fournisseur (⚙) ou baisse la qualité. |
+| « … est un modèle de langage » | Un LLM ne génère pas de 3D : choisis un serveur image→3D comme moteur. |
+| Le LLM ne répond rien | Le modèle choisi n’accepte pas les images : prends un modèle vision. |
+| « Le maillage n’est pas étanche » | Le STL reste utilisable : le trancheur le répare à l’import. Le socle n’est alors pas ajouté. |
