@@ -244,3 +244,32 @@ contrat. Un en-tête `Authorization: Bearer <clé>` est envoyé si une clé est 
 | « … est un modèle de langage » | Un LLM ne génère pas de 3D : choisis un serveur image→3D comme moteur. |
 | Le LLM ne répond rien | Le modèle choisi n’accepte pas les images : prends un modèle vision. |
 | « Le maillage n’est pas étanche » | Le STL reste utilisable : le trancheur le répare à l’import. Le socle n’est alors pas ajouté. |
+
+## 10. Colorier
+
+L’onglet **Colorier** attribue une couleur à chaque partie d’un modèle, à la manière de
+MelSplit, puis exporte le résultat pour l’impression multicolore.
+
+1. **Modèle** : dépose un STL ou un 3MF. Un STL ne porte pas de couleur : tout est « Base ».
+   Un 3MF déjà coloré garde ses couleurs (matériaux de base ou groupes de couleurs de la
+   spécification 3MF).
+2. **Choisis les parties** :
+   - **Détail** (D) : un clic colorie la zone sous le curseur, en s’arrêtant aux arêtes vives.
+     *Taille maximale du détail* limite l’étendue autour du clic (en % de la diagonale du
+     modèle); *Sensibilité aux arêtes* est l’angle à partir duquel deux triangles voisins sont
+     séparés. Ça déborde : réduis les deux. Ça ne prend pas tout : augmente-les.
+   - **Pinceau** (P) : glisse pour peindre; le rayon se règle avec le curseur. Clic droit
+     ou Alt + glisser pour tourner la vue.
+   - **Gomme** (G) : remet la couleur de base.
+3. **Couleurs** : clique sur une couleur pour la choisir, sur sa pastille pour la modifier.
+   Les pastilles rapides ajoutent une couleur; ✕ la retire (ses triangles reviennent à la
+   base et l’historique est vidé). *Remplir tout* et *Tout effacer* agissent sur tout le modèle.
+   Ctrl+Z annule, Ctrl+Maj+Z (ou Ctrl+Y) rétablit.
+4. **Exporter** :
+   - un **3MF** avec une couleur par triangle (matériaux de base du 3MF);
+   - un **ZIP de STL**, un par couleur utilisée, avec les mêmes coordonnées : importe-les
+     ensemble dans le trancheur pour les superposer et affecte un filament à chacun.
+
+Limites : les couleurs peintes dans le trancheur (Bambu Studio, OrcaSlicer : attribut
+`paint_color`) ne sont pas lues; la sélection se fait par triangle, sans lissage du bord;
+au-delà de 500 000 triangles, les clics deviennent lents.

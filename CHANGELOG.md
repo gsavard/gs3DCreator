@@ -1,5 +1,21 @@
 # Historique des versions
 
+## 2.2.0 — 2026-11-16
+
+Nouvelle section **Colorier**, inspirée de MelSplit : choisis les parties d’un modèle et
+donne-leur une couleur, puis exporte en 3MF multicolore ou en STL par couleur.
+
+- Onglet « Colorier » : ouvre un STL ou un 3MF (OBJ, GLB, PLY et OFF aussi). Les couleurs
+  déjà présentes dans un 3MF (matériaux de base ou groupes de couleurs) sont conservées.
+- **Détail** (pot de peinture) : un clic colorie la zone jusqu’aux arêtes vives, avec une
+  taille maximale et une sensibilité aux arêtes réglables; aperçu de la zone au survol.
+- **Pinceau** et **Gomme** à rayon réglable (clic droit ou Alt + glisser pour tourner la vue).
+- Palette modifiable (sélecteur de couleur, couleurs rapides, part de la surface par couleur),
+  Remplir tout, Tout effacer, Annuler / Rétablir (Ctrl+Z, Ctrl+Maj+Z).
+- Export : un 3MF avec une couleur par triangle et un ZIP contenant un STL par couleur
+  (mêmes coordonnées, donc superposables dans le trancheur).
+- Nouvelles routes `/api/couleur*` (voir docs/API.md).
+
 ## 2.1.0 — 2026-11-04
 
 Nouvelle section **Image → 3D**, inspirée de la génération 3D de Hi3D.

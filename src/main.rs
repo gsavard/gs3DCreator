@@ -2,6 +2,7 @@
 //! avec rotules, goujons ou tenons d'assemblage.
 
 mod cli;
+mod couleur;
 mod ia;
 mod lanceur;
 mod maillage;

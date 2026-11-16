@@ -27,6 +27,8 @@ Blender.
 - **Image → 3D** : transforme une photo ou une illustration en STL imprimable grâce à ton
   serveur d’IA local (Hunyuan3D-2, TripoSR, TRELLIS…). Un LLM vision (LM Studio, Ollama,
   OpenRouter…) peut vérifier l’image avant la génération.
+- **Colorier** : choisis les parties d’un STL ou d’un 3MF (pot de peinture par détail, pinceau,
+  gomme), attribue-leur des couleurs, puis exporte un 3MF multicolore et un STL par couleur.
 - **Tout est local** : un seul binaire, aucune dépendance Python, aucun envoi vers Internet
   (three.js est intégré au binaire), sauf vers les fournisseurs d’IA que tu configures.
 
@@ -74,6 +76,9 @@ par défaut. Relancer l’application réutilise le serveur déjà démarré.
 
 L’onglet **Image → 3D** génère un modèle à partir d’une image. Configure d’abord un
 fournisseur avec le bouton ⚙ (voir [Image → 3D dans le guide](docs/GUIDE.md#9-image--3d)).
+
+L’onglet **Colorier** sert à peindre un modèle : charge un STL ou un 3MF, clique sur les parties
+à colorier (voir [Colorier dans le guide](docs/GUIDE.md#10-colorier)) et exporte.
 
 Le guide détaillé est dans [docs/GUIDE.md](docs/GUIDE.md).
 

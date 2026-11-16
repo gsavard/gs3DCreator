@@ -109,7 +109,7 @@ main.trace #vue{cursor:crosshair}
 
 /* ---------------------------------------------------------------- onglets et image → 3D */
 .onglets{display:flex;gap:4px;background:var(--creux);border:1px solid var(--trait);border-radius:10px;padding:3px;margin:0 0 18px}
-.onglets button{flex:1;background:none;border:0;border-radius:7px;padding:7px 6px;font-size:13.5px;cursor:pointer;color:var(--doux)}
+.onglets button{flex:1;background:none;border:0;border-radius:7px;padding:7px 4px;font-size:13px;white-space:nowrap;cursor:pointer;color:var(--doux)}
 .onglets button[aria-selected=true]{background:var(--panneau);color:var(--texte);box-shadow:0 0 0 1px var(--trait)}
 .onglets button.reglage{flex:0 0 auto;padding:7px 10px}
 [hidden]{display:none!important}
@@ -180,6 +180,39 @@ dialog::backdrop{background:rgba(10,11,13,.6)}
 @media (max-width:820px){body{grid-template-columns:1fr;grid-template-rows:auto 60vh;overflow:auto}
   aside{border-right:0}#resultat{position:static;width:auto;margin:10px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------------------------------------------------------------- colorier */
+#depot-col{display:block;border:1.5px dashed var(--trait);border-radius:10px;background:var(--creux);
+  padding:20px 14px;text-align:center;cursor:pointer;transition:border-color .15s}
+#depot-col:hover,#depot-col.survol{border-color:var(--pei)}
+#depot-col input{display:none}
+#depot-col strong{display:block;font-weight:600}
+#depot-col span{color:var(--doux);font-size:13px}
+#palette{display:flex;flex-direction:column;gap:4px}
+.col{display:grid;grid-template-columns:30px 1fr auto auto;gap:9px;align-items:center;padding:5px 7px;
+  border:1.5px solid transparent;border-radius:8px;cursor:pointer;font-size:13.5px}
+.col:hover{background:var(--creux)}
+.col.sel{border-color:var(--pei);background:var(--creux)}
+.col input[type=color]{width:30px;height:26px;padding:0;border:1px solid var(--trait);border-radius:6px;background:none;cursor:pointer}
+.col small{color:var(--doux);font-variant-numeric:tabular-nums}
+.col button{background:none;border:0;color:var(--doux);cursor:pointer;font-size:15px;line-height:1;padding:2px 5px;border-radius:5px}
+.col button:hover{color:var(--alerte);background:rgba(224,120,79,.12)}
+.rapides{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+.rapides button{width:22px;height:22px;border-radius:6px;border:1px solid var(--trait);cursor:pointer;padding:0}
+.rapides button:hover{outline:2px solid var(--pei);outline-offset:1px}
+.actions-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.actions-col .sec{text-align:center}
+.gros{width:100%;padding:12px;border:0;border-radius:10px;background:linear-gradient(90deg,var(--pei),var(--violet));color:#121418;font-weight:700;font-size:15.5px;cursor:pointer}
+.gros:disabled{background:var(--trait);color:var(--doux);cursor:wait}
+#res-col{margin-top:12px}
+#res-col .rep{display:grid;grid-template-columns:14px 1fr auto;gap:9px;align-items:center;font-size:13px;padding:3px 0}
+#res-col .rep i{width:14px;height:14px;border-radius:4px;border:1px solid var(--trait)}
+#res-col .rep small{color:var(--doux);font-variant-numeric:tabular-nums}
+#err-col{color:var(--alerte);font-size:13px;margin-top:8px;min-height:1em}
+.astuce{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--panneau);border:1px solid var(--trait);
+  border-radius:999px;padding:6px 16px;font-size:12.5px;color:var(--doux);white-space:nowrap;pointer-events:none;max-width:94%;overflow:hidden;text-overflow:ellipsis}
+main.col-actif #vue{cursor:crosshair}
+.sec:disabled{opacity:.45;cursor:default}
 </style>
 <script type="importmap">
 {"imports":{"three":"/vendor/three/three.module.js",
@@ -193,6 +226,7 @@ dialog::backdrop{background:rgba(10,11,13,.6)}
 
   <div class="onglets" role="tablist">
     <button type="button" role="tab" id="o-decoupe" aria-selected="true">Découpe</button>
+    <button type="button" role="tab" id="o-couleur" aria-selected="false">Colorier</button>
     <button type="button" role="tab" id="o-image" aria-selected="false">Image → 3D</button>
     <button type="button" class="reglage" id="o-four" title="Fournisseurs IA" aria-label="Fournisseurs IA">⚙</button>
   </div>
@@ -253,6 +287,59 @@ dialog::backdrop{background:rgba(10,11,13,.6)}
     <button id="generer" type="button" style="margin-top:16px">Découper</button>
     <div id="erreur" role="alert"></div>
   </section>
+  </div>
+
+  <div id="p-couleur" hidden>
+    <section class="etape">
+      <h2><b>1</b>Modèle</h2>
+      <label id="depot-col" tabindex="0">
+        <input type="file" id="f-couleur" accept=".stl,.3mf,.obj,.glb,.gltf,.ply,.off">
+        <strong id="depot-col-titre">Dépose un STL ou un 3MF ou clique ici</strong>
+        <span id="depot-col-info">Les couleurs déjà présentes dans un 3MF sont conservées.</span>
+      </label>
+    </section>
+
+    <section class="etape inactif" id="c2">
+      <h2><b>2</b>Choisis les parties</h2>
+      <div class="choix" id="outils-col">
+        <button type="button" data-o="detail" aria-pressed="true">Détail<small>pot de peinture</small></button>
+        <button type="button" data-o="pinceau" aria-pressed="false">Pinceau<small>main levée</small></button>
+        <button type="button" data-o="gomme" aria-pressed="false">Gomme<small>remet la base</small></button>
+      </div>
+      <div id="rg-detail">
+        <p class="aide">Clique sur un détail (un œil, une aile, un motif) : la zone se colorie d’un coup, jusqu’aux arêtes vives.</p>
+        <div class="curseur"><div><span>Taille maximale du détail</span><output id="o-taille">15 %</output></div>
+          <input type="range" id="r-taille" min="1" max="100" value="15"></div>
+        <div class="curseur"><div><span>Sensibilité aux arêtes</span><output id="o-angle">35°</output></div>
+          <input type="range" id="r-angle" min="5" max="90" value="35"></div>
+        <p class="aide">Ça déborde ? Réduis la taille ou l’angle. Ça ne prend pas tout ? Augmente-les.</p>
+      </div>
+      <div id="rg-pinceau" hidden>
+        <p class="aide">Glisse pour peindre. Clic droit ou Alt + glisser pour tourner la vue.</p>
+        <div class="curseur"><div><span>Taille du pinceau</span><output id="o-pinceau">5 %</output></div>
+          <input type="range" id="r-pinceau" min="1" max="40" value="5"></div>
+      </div>
+    </section>
+
+    <section class="etape inactif" id="c3">
+      <h2><b>3</b>Couleurs</h2>
+      <div id="palette"></div>
+      <div class="liens" style="margin-top:8px"><button class="reinit" id="c-ajout" type="button">Ajouter une couleur</button></div>
+      <div class="rapides" id="rapides" aria-label="Couleurs rapides"></div>
+      <div class="actions-col">
+        <button class="sec" type="button" id="c-annuler" disabled>Annuler</button>
+        <button class="sec" type="button" id="c-refaire" disabled>Rétablir</button>
+        <button class="sec" type="button" id="c-tout">Remplir tout</button>
+        <button class="sec" type="button" id="c-efface">Tout effacer</button>
+      </div>
+    </section>
+
+    <section class="etape inactif" id="c4">
+      <h2><b>4</b>Exporter</h2>
+      <button class="gros" id="exp-col" type="button">Créer les fichiers colorés</button>
+      <div id="res-col"></div>
+      <div id="err-col" role="alert"></div>
+    </section>
   </div>
 
   <div id="p-image" hidden>
@@ -318,6 +405,12 @@ dialog::backdrop{background:rgba(10,11,13,.6)}
     <button id="v-pieces" aria-pressed="false" type="button">Pièces</button>
     <button id="v-eclate" aria-pressed="false" type="button">Vue éclatée</button>
   </div>
+  <div class="outils" id="outils-col-vue" hidden>
+    <button id="v-col-annuler" type="button" title="Annuler (Ctrl+Z)" disabled>↶ Annuler</button>
+    <button id="v-col-refaire" type="button" title="Rétablir (Ctrl+Maj+Z)" disabled>↷ Rétablir</button>
+    <button id="v-col-centrer" type="button">Recentrer</button>
+  </div>
+  <div class="astuce" id="astuce-col" hidden></div>
   <div id="charge"><span id="charge-txt">Chargement…</span></div>
   <div id="resultat"></div>
   <div id="historique" hidden><h3>Historique</h3><div id="gens"></div><div id="fiche"></div></div>
@@ -689,28 +782,377 @@ depot.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefa
 ['dragleave','drop'].forEach(t => depot.addEventListener(t, e => { e.preventDefault(); depot.classList.remove('survol'); }));
 depot.addEventListener('drop', e => e.dataTransfer.files[0] && televerser(e.dataTransfer.files[0]));
 $('appliquer').onclick = preparer;
+// ================================================================ colorier
+const coloriage = (() => {
+  const RAPIDES = ['#E5484D', '#F76B15', '#F5D90A', '#30A46C', '#12A594', '#3E63DD', '#8E4EC6', '#D6409F', '#FFFFFF', '#2B2B2B', '#8B5E3C', '#A1A1A1'];
+  const DEFAUT = ['#E5484D', '#3E63DD', '#30A46C', '#F5D90A'];
+  const MAX_COULEURS = 64;
+  const S = {sid: null, nom: '', groupe: new THREE.Group(), mesh: null, nf: 0, pos: null, voisins: null, cent: null, norm: null, aire: null,
+    faces: null, palette: [], lin: [], actif: 1, outil: 'detail', pile: [], refaire: [], dims: [1, 1, 1], diag: 1,
+    trait: null, peint: false, stamp: null, cle: 0, survol: null, derT: 0, derCout: 0, plan: false, min: 999999, max: -1};
+  scene.add(S.groupe); S.groupe.visible = false;
+  const apercu = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: .4,
+    side: THREE.DoubleSide, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2}));
+  apercu.visible = false; apercu.frustumCulled = false; apercu.raycast = () => {};
+  const rayon = new THREE.Raycaster(), pt = new THREE.Vector2();
+  const errCol = m => { $('err-col').textContent = m || ''; };
+
+  function majBoutons(){
+    for (const id of ['c-annuler', 'v-col-annuler']) $(id).disabled = !S.pile.length;
+    for (const id of ['c-refaire', 'v-col-refaire']) $(id).disabled = !S.refaire.length;
+  }
+  const lineaire = h => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
+  function ecrireFace(f, c){
+    const a = S.mesh.geometry.attributes.color.array, l = S.lin[c], o = f * 9;
+    for (let k = 0; k < 3; k++) { a[o + k * 3] = l[0]; a[o + k * 3 + 1] = l[1]; a[o + k * 3 + 2] = l[2]; }
+    if (f < S.min) S.min = f; if (f > S.max) S.max = f;
+  }
+  function envoyer(){
+    if (S.max < 0) return;
+    const at = S.mesh.geometry.attributes.color;
+    at.clearUpdateRanges(); at.addUpdateRange(S.min * 9, (S.max - S.min + 1) * 9); at.needsUpdate = true;
+    S.min = 999999999; S.max = -1;
+  }
+  function toutRecolorier(){
+    for (let f = 0; f < S.nf; f++) ecrireFace(f, S.faces[f]);
+    const at = S.mesh.geometry.attributes.color; at.clearUpdateRanges(); at.needsUpdate = true; S.min = 999999999; S.max = -1;
+  }
+
+  // ---- statistiques (part de la surface) et liste des couleurs
+  function majPalette(){
+    const part = new Float64Array(S.palette.length); let tot = 0;
+    for (let f = 0; f < S.nf; f++) { part[S.faces[f]] += S.aire[f]; tot += S.aire[f]; }
+    const z = $('palette'); z.innerHTML = '';
+    S.palette.forEach((h, i) => {
+      const d = document.createElement('div');
+      d.className = 'col' + (i === S.actif ? ' sel' : ''); d.dataset.i = i;
+      d.innerHTML = `<input type="color" value="${h}" aria-label="Modifier la couleur"><span>${i === 0 ? 'Base (non peint)' : 'Couleur ' + i}</span>
+        <small>${tot ? (part[i] * 100 / tot).toFixed(1).replace('.', ',') : '0'} %</small>${i === 0 ? '<span></span>' : '<button type="button" title="Retirer cette couleur" aria-label="Retirer">✕</button>'}`;
+      d.onclick = () => { S.actif = i; if (S.outil === 'gomme') outil('detail'); majPalette(); };
+      const sel = d.querySelector('input');
+      sel.onclick = e => { e.stopPropagation(); S.actif = i; z.querySelectorAll('.col').forEach(x => x.classList.toggle('sel', +x.dataset.i === i)); };
+      sel.oninput = () => { S.palette[i] = sel.value.toUpperCase(); S.lin[i] = lineaire(sel.value); for (let f = 0; f < S.nf; f++) if (S.faces[f] === i) ecrireFace(f, i); envoyer(); };
+      const x = d.querySelector('button');
+      if (x) x.onclick = e => { e.stopPropagation(); retirer(i); };
+      z.append(d);
+    });
+    $('c-ajout').disabled = S.palette.length >= MAX_COULEURS;
+    majBoutons();
+  }
+  function ajouter(h){
+    h = h.toUpperCase();
+    const i = S.palette.indexOf(h);
+    if (i > 0) { S.actif = i; majPalette(); return; }
+    if (S.palette.length >= MAX_COULEURS) return;
+    S.palette.push(h); S.lin.push(lineaire(h)); S.actif = S.palette.length - 1; majPalette();
+  }
+  function retirer(i){
+    for (let f = 0; f < S.nf; f++) { const c = S.faces[f]; S.faces[f] = c === i ? 0 : c > i ? c - 1 : c; }
+    S.palette.splice(i, 1); S.lin.splice(i, 1);
+    S.pile = []; S.refaire = [];
+    S.actif = Math.min(Math.max(1, S.actif > i ? S.actif - 1 : S.actif), S.palette.length - 1);
+    if (S.palette.length < 2) ajouter(DEFAUT[0]);
+    toutRecolorier(); majPalette();
+  }
+
+  // ---- appliquer une couleur à des triangles (avec historique)
+  function peindre(liste, c, trait){
+    let n = 0;
+    for (const f of liste) {
+      if (S.faces[f] === c) continue;
+      trait.idx.push(f); trait.old.push(S.faces[f]); S.faces[f] = c; ecrireFace(f, c); n++;
+    }
+    if (n) envoyer();
+    return n;
+  }
+  function validerTrait(trait, c){
+    if (!trait.idx.length) return;
+    S.pile.push({idx: Int32Array.from(trait.idx), old: Uint8Array.from(trait.old), nouv: c});
+    if (S.pile.length > 40) S.pile.shift();
+    S.refaire = []; majPalette();
+  }
+  function appliquerGlobal(c){
+    const t = {idx: [], old: []}, tous = new Int32Array(S.nf); for (let f = 0; f < S.nf; f++) tous[f] = f;
+    peindre(tous, c, t); validerTrait(t, c);
+  }
+  function annuler(){
+    const e = S.pile.pop(); if (!e) return;
+    for (let i = 0; i < e.idx.length; i++) { S.faces[e.idx[i]] = e.old[i]; ecrireFace(e.idx[i], e.old[i]); }
+    envoyer(); S.refaire.push(e); majPalette();
+  }
+  function refaire(){
+    const e = S.refaire.pop(); if (!e) return;
+    for (let i = 0; i < e.idx.length; i++) { S.faces[e.idx[i]] = e.nouv; ecrireFace(e.idx[i], e.nouv); }
+    envoyer(); S.pile.push(e); majPalette();
+  }
+
+  // ---- régions
+  function etiquette(){ S.cle = (S.cle + 1) >>> 0; return S.cle; }
+  function regionDetail(f0){
+    const R = S.diag * (+$('r-taille').value) / 100, r2 = R * R, cosMax = Math.cos(+$('r-angle').value * Math.PI / 180);
+    const c = S.cent, n = S.norm, v = S.voisins, cle = etiquette();
+    const x0 = c[f0 * 3], y0 = c[f0 * 3 + 1], z0 = c[f0 * 3 + 2];
+    const pile = [f0], sortie = []; S.stamp[f0] = cle;
+    while (pile.length) {
+      const f = pile.pop(); sortie.push(f);
+      for (let k = 0; k < 3; k++) {
+        const g = v[f * 3 + k];
+        if (g < 0 || S.stamp[g] === cle) continue;
+        const dx = c[g * 3] - x0, dy = c[g * 3 + 1] - y0, dz = c[g * 3 + 2] - z0;
+        if (dx * dx + dy * dy + dz * dz > r2) continue;
+        if (n[f * 3] * n[g * 3] + n[f * 3 + 1] * n[g * 3 + 1] + n[f * 3 + 2] * n[g * 3 + 2] < cosMax) continue;
+        S.stamp[g] = cle; pile.push(g);
+      }
+    }
+    return sortie;
+  }
+  function regionPinceau(f0, p){
+    const R = S.diag * (+$('r-pinceau').value) / 200, r2 = R * R;
+    const c = S.cent, v = S.voisins, cle = etiquette();
+    const pile = [f0], sortie = []; S.stamp[f0] = cle;
+    while (pile.length) {
+      const f = pile.pop(); sortie.push(f);
+      for (let k = 0; k < 3; k++) {
+        const g = v[f * 3 + k];
+        if (g < 0 || S.stamp[g] === cle) continue;
+        const dx = c[g * 3] - p.x, dy = c[g * 3 + 1] - p.y, dz = c[g * 3 + 2] - p.z;
+        if (dx * dx + dy * dy + dz * dz > r2) continue;
+        S.stamp[g] = cle; pile.push(g);
+      }
+    }
+    return sortie;
+  }
+  const region = (f, p) => S.outil === 'detail' ? regionDetail(f) : regionPinceau(f, p);
+
+  function viser(e){
+    const r = renderer.domElement.getBoundingClientRect();
+    pt.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    rayon.setFromCamera(pt, camera);
+    const t = performance.now();
+    const h = rayon.intersectObject(S.mesh, false)[0];
+    S.derCout = performance.now() - t;
+    if (!h) return null;
+    return {f: h.faceIndex, p: S.mesh.worldToLocal(h.point.clone())};
+  }
+  function montrerApercu(liste){
+    if (!liste) { apercu.visible = false; return; }
+    const src = S.mesh.geometry.attributes.position.array, out = new Float32Array(liste.length * 9);
+    for (let i = 0; i < liste.length; i++) out.set(src.subarray(liste[i] * 9, liste[i] * 9 + 9), i * 9);
+    apercu.geometry.dispose();
+    apercu.geometry = new THREE.BufferGeometry();
+    apercu.geometry.setAttribute('position', new THREE.BufferAttribute(out, 3));
+    apercu.visible = true;
+  }
+
+  // ---- interactions
+  const cv = renderer.domElement;
+  const pinceauActif = () => S.outil !== 'detail';
+  const colorActif = () => S.outil === 'gomme' ? 0 : S.actif;
+  function boutons(alt){
+    const B = THREE.MOUSE;
+    controls.mouseButtons = pinceauActif() && !alt ? {LEFT: -1, MIDDLE: B.DOLLY, RIGHT: B.ROTATE} : {LEFT: B.ROTATE, MIDDLE: B.DOLLY, RIGHT: B.PAN};
+  }
+  cv.addEventListener('pointerdown', e => {
+    if (!S.plan) return;
+    boutons(e.altKey);
+    S.bas = [e.clientX, e.clientY, e.button];
+    if (e.button !== 0 || e.altKey || !pinceauActif()) return;
+    const h = viser(e); if (!h) return;
+    cv.setPointerCapture(e.pointerId);
+    S.peint = true; S.trait = {idx: [], old: []};
+    peindre(region(h.f, h.p), colorActif(), S.trait);
+  }, true);
+  cv.addEventListener('pointermove', e => {
+    if (!S.plan || e.buttons && !S.peint) { if (S.plan && e.buttons) apercu.visible = false; return; }
+    const maintenant = performance.now();
+    if (maintenant - S.derT < S.derCout * 2) return;
+    S.derT = maintenant;
+    const h = viser(e);
+    if (!h) { apercu.visible = false; return; }
+    const liste = region(h.f, h.p);
+    if (S.peint) { peindre(liste, colorActif(), S.trait); apercu.visible = false; }
+    else montrerApercu(liste);
+  });
+  cv.addEventListener('pointerleave', () => { apercu.visible = false; });
+  addEventListener('pointerup', e => {
+    if (!S.plan) return;
+    if (S.peint) { S.peint = false; validerTrait(S.trait, colorActif()); S.trait = null; return; }
+    const b = S.bas; S.bas = null;
+    if (!b || e.target !== cv || b[2] !== 0 || S.outil !== 'detail' || Math.hypot(e.clientX - b[0], e.clientY - b[1]) > 4) return;
+    const h = viser(e); if (!h) return;
+    const t = {idx: [], old: []}; peindre(regionDetail(h.f), S.actif, t); validerTrait(t, S.actif);
+  });
+  addEventListener('keydown', e => {
+    if (!S.plan || e.target.matches('input[type=number],select,input[type=text]') || $('dlg-four').open) return;
+    const z = e.key.toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && z === 'z') { e.preventDefault(); e.shiftKey ? refaire() : annuler(); }
+    else if ((e.ctrlKey || e.metaKey) && z === 'y') { e.preventDefault(); refaire(); }
+    else if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (z === 'd') outil('detail'); else if (z === 'p') outil('pinceau'); else if (z === 'g') outil('gomme');
+    }
+  });
+  addEventListener('keydown', e => { if (S.plan && e.key === 'Alt') boutons(true); });
+  addEventListener('keyup', e => { if (S.plan && e.key === 'Alt') boutons(false); });
+
+  function astuce(){
+    $('astuce-col').textContent = S.outil === 'detail'
+      ? 'Clic : colorier la zone · Glisser : tourner · Molette : zoom · Clic droit : déplacer'
+      : 'Glisser : peindre · Clic droit ou Alt + glisser : tourner · Molette : zoom';
+  }
+  function outil(o){
+    S.outil = o; apercu.visible = false;
+    document.querySelectorAll('#outils-col button').forEach(b => b.setAttribute('aria-pressed', b.dataset.o === o));
+    $('rg-detail').hidden = o !== 'detail'; $('rg-pinceau').hidden = o === 'detail';
+    boutons(false); astuce();
+  }
+  document.querySelectorAll('#outils-col button').forEach(b => b.onclick = () => outil(b.dataset.o));
+  const sliders = () => {
+    $('o-taille').textContent = `${$('r-taille').value} % · ≈ ${(S.diag * $('r-taille').value / 100).toFixed(1).replace('.', ',')} mm`;
+    $('o-angle').textContent = $('r-angle').value + '°';
+    $('o-pinceau').textContent = `${$('r-pinceau').value} % · Ø ≈ ${(S.diag * $('r-pinceau').value / 100).toFixed(1).replace('.', ',')} mm`;
+  };
+  ['r-taille', 'r-angle', 'r-pinceau'].forEach(id => $(id).oninput = sliders);
+  RAPIDES.forEach(h => { const b = document.createElement('button'); b.type = 'button'; b.style.background = h; b.title = h; b.onclick = () => ajouter(h); $('rapides').append(b); });
+  $('c-ajout').onclick = () => ajouter('#' + Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0'));
+  $('c-annuler').onclick = $('v-col-annuler').onclick = annuler;
+  $('c-refaire').onclick = $('v-col-refaire').onclick = refaire;
+  $('c-tout').onclick = () => { if (S.mesh) appliquerGlobal(S.actif); };
+  $('c-efface').onclick = () => { if (S.mesh) appliquerGlobal(0); };
+  $('v-col-centrer').onclick = () => cadrage();
+
+  function cadrage(){
+    const [dx, dy, dz] = S.dims, R = Math.max(dx, dy, dz);
+    camera.position.set(R * 1.3, -R * 1.9, R * 1.1); controls.target.set(0, 0, dz / 2);
+    camera.near = Math.max(R / 500, .05); camera.far = R * 50; camera.updateProjectionMatrix(); controls.update();
+  }
+
+  // ---- ouverture d'un modèle
+  const pause = () => new Promise(r => setTimeout(r, 0));
+  async function ouvrir(f){
+    errCol(); attente('Envoi du modèle…');
+    try {
+      const fd = new FormData(); fd.append('fichier', f);
+      const m = await api('/api/couleur', fd);
+      attente('Chargement du maillage…');
+      const rep = await fetch(`/api/couleur/${m.id}/maillage`);
+      if (!rep.ok) throw new Error('Maillage introuvable.');
+      const buf = await rep.arrayBuffer();
+      attente('Préparation des outils…'); await pause();
+      construire(m, buf);
+      $('depot-col-titre').textContent = f.name;
+      $('depot-col-info').textContent = `${m.dims.join(' × ').replace(/\./g, ',')} mm · ${m.triangles.toLocaleString('fr-CA')} triangles`
+        + (m.colore ? ' · couleurs du fichier conservées' : '');
+    } catch (e) { errCol(e.message); $('depot-col-info').textContent = e.message; }
+    attente();
+  }
+  function construire(m, buf){
+    const dv = new DataView(buf), nv = dv.getUint32(0, true), nf = dv.getUint32(4, true);
+    if (8 + nv * 12 + nf * 12 !== buf.byteLength) throw new Error('Maillage reçu incomplet.');
+    const pos = new Float32Array(buf, 8, nv * 3), idx = new Uint32Array(buf, 8 + nv * 12, nf * 3);
+    if (S.mesh) { S.groupe.remove(S.mesh); S.mesh.geometry.dispose(); }
+    let g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.setIndex(new THREE.BufferAttribute(idx, 1));
+    g.computeVertexNormals();
+    g = g.toNonIndexed();
+    g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(nf * 9), 3));
+    S.nf = nf; S.dims = m.dims; S.diag = Math.hypot(...m.dims) || 1;
+    const p = g.attributes.position.array;
+    S.cent = new Float32Array(nf * 3); S.norm = new Float32Array(nf * 3); S.aire = new Float32Array(nf);
+    for (let f = 0; f < nf; f++) {
+      const o = f * 9, ux = p[o + 3] - p[o], uy = p[o + 4] - p[o + 1], uz = p[o + 5] - p[o + 2];
+      const vx = p[o + 6] - p[o], vy = p[o + 7] - p[o + 1], vz = p[o + 8] - p[o + 2];
+      const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, l = Math.hypot(nx, ny, nz) || 1;
+      S.norm[f * 3] = nx / l; S.norm[f * 3 + 1] = ny / l; S.norm[f * 3 + 2] = nz / l; S.aire[f] = l / 2;
+      S.cent[f * 3] = (p[o] + p[o + 3] + p[o + 6]) / 3; S.cent[f * 3 + 1] = (p[o + 1] + p[o + 4] + p[o + 7]) / 3; S.cent[f * 3 + 2] = (p[o + 2] + p[o + 5] + p[o + 8]) / 3;
+    }
+    // adjacence par arêtes partagées
+    S.voisins = new Int32Array(nf * 3).fill(-1);
+    const aretes = new Map();
+    for (let f = 0; f < nf; f++) for (let k = 0; k < 3; k++) {
+      const a = idx[f * 3 + k], b = idx[f * 3 + (k + 1) % 3], cle = a < b ? a * nv + b : b * nv + a, o = aretes.get(cle);
+      if (o === undefined) aretes.set(cle, f * 3 + k);
+      else { S.voisins[f * 3 + k] = (o / 3) | 0; S.voisins[o] = f; aretes.delete(cle); }
+    }
+    S.stamp = new Uint32Array(nf); S.cle = 0;
+    S.sid = m.id; S.nom = m.nom;
+    S.palette = m.palette.map(h => h.toUpperCase()); S.lin = S.palette.map(lineaire);
+    S.faces = Uint8Array.from(atob(m.faces), c => c.charCodeAt(0));
+    if (S.palette.length < 2) DEFAUT.forEach(h => { S.palette.push(h); S.lin.push(lineaire(h)); });
+    S.actif = 1; S.pile = []; S.refaire = [];
+    S.mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({vertexColors: true, roughness: .62, metalness: 0, side: THREE.DoubleSide}));
+    S.groupe.position.set(-(m.min[0] + m.max[0]) / 2, -(m.min[1] + m.max[1]) / 2, -m.min[2]);
+    S.groupe.add(S.mesh); S.groupe.add(apercu);
+    toutRecolorier(); majPalette(); sliders(); outil('detail'); cadrage();
+    ['c2', 'c3', 'c4'].forEach(id => $(id).classList.remove('inactif'));
+    $('res-col').innerHTML = ''; $('vide').hidden = true;
+  }
+
+  // ---- export
+  const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+  $('exp-col').onclick = async () => {
+    if (!S.sid) return;
+    errCol(); $('exp-col').disabled = true; attente('Création des fichiers…');
+    try {
+      const r = await api(`/api/couleur/${S.sid}/exporter`, {palette: S.palette, faces: b64(S.faces)});
+      $('res-col').innerHTML = r.couleurs.map(c => `<div class="rep"><i style="background:${c.hex}"></i><span>${c.hex}</span><small>${String(c.pct).replace('.', ',')} %</small></div>`).join('')
+        + `<a class="dl p" href="${r.mf}" download>Télécharger le 3MF en couleurs</a>
+           <a class="dl s" href="${r.zip}" download>Télécharger les STL par couleur (ZIP)</a>
+           <p class="aide">Les STL gardent les mêmes coordonnées : importe-les ensemble dans ton trancheur pour les superposer, un par filament.</p>`;
+    } catch (e) { errCol(e.message); }
+    $('exp-col').disabled = false; attente();
+  };
+
+  // ---- dépôt de fichier
+  const dep = $('depot-col');
+  $('f-couleur').onchange = e => { const f = e.target.files[0]; e.target.value = ''; f && ouvrir(f); };
+  dep.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('f-couleur').click(); } };
+  ['dragenter', 'dragover'].forEach(t => dep.addEventListener(t, e => { e.preventDefault(); dep.classList.add('survol'); }));
+  ['dragleave', 'drop'].forEach(t => dep.addEventListener(t, e => { e.preventDefault(); dep.classList.remove('survol'); }));
+  dep.addEventListener('drop', e => e.dataTransfer.files[0] && ouvrir(e.dataTransfer.files[0]));
+
+  return {
+    pret: () => !!S.mesh,
+    afficher(on){
+      S.plan = on; S.groupe.visible = on; apercu.visible = false;
+      $('outils-col-vue').hidden = !on || !S.mesh; $('astuce-col').hidden = !on || !S.mesh;
+      document.querySelector('main').classList.toggle('col-actif', on);
+      if (on) boutons(false);
+      else controls.mouseButtons = {LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN};
+      if (on && S.mesh) cadrage();
+    },
+  };
+})();
+
 // ================================================================ image → 3D
 let ongletCourant = 'decoupe', genere = null, gens = [], genSel = null, imageFichier = null, four = {fournisseurs: [], types: []};
 function onglet(o){
   ongletCourant = o;
-  $('o-decoupe').setAttribute('aria-selected', o === 'decoupe');
-  $('o-image').setAttribute('aria-selected', o === 'image');
-  $('p-decoupe').hidden = o !== 'decoupe'; $('p-image').hidden = o !== 'image';
-  $('sous').textContent = o === 'image' ? 'Transforme une image en modèle 3D imprimable (STL), avec ton serveur d’IA.'
+  const dec = o === 'decoupe', img = o === 'image', col = o === 'couleur';
+  $('o-decoupe').setAttribute('aria-selected', dec);
+  $('o-couleur').setAttribute('aria-selected', col);
+  $('o-image').setAttribute('aria-selected', img);
+  $('p-decoupe').hidden = !dec; $('p-image').hidden = !img; $('p-couleur').hidden = !col;
+  $('sous').textContent = img ? 'Transforme une image en modèle 3D imprimable (STL), avec ton serveur d’IA.'
+    : col ? 'Colorie les parties d’un STL ou d’un 3MF, puis exporte un 3MF multicolore.'
     : 'Découpe une figurine en pièces imprimables, avec rotules, goujons ou tenons d’assemblage.';
-  const img = o === 'image';
+  if (traceOn) mode('translate');
   gizmo.detach();
-  if (modele) modele.visible = !img;
-  plans.visible = !img && !!etat;
+  if (modele) modele.visible = dec;
+  plans.visible = dec && !!etat;
   if (pieces) pieces.visible = false;
   if (genere) genere.visible = img;
+  coloriage.afficher(col);
   $('historique').hidden = !img;
-  $('outils').hidden = img || !etat;
+  $('outils').hidden = !dec || !etat;
   $('resultat').classList.remove('on');
   const vide = $('vide');
   if (img) {
     vide.hidden = !!genere;
     vide.innerHTML = '<p><strong>Image → 3D</strong>Téléverse une image, choisis ton serveur et lance la génération.</p>';
+  } else if (col) {
+    vide.hidden = coloriage.pret();
+    vide.innerHTML = '<p><strong>Colorier</strong>Téléverse un STL ou un 3MF, puis clique sur les parties à colorier.</p>';
   } else {
     vide.hidden = !!etat;
     vide.innerHTML = '<p><strong>Aucun modèle</strong>Téléverse une figurine pour voir les plans de coupe proposés.</p>';
@@ -720,6 +1162,7 @@ function onglet(o){
 }
 $('o-decoupe').onclick = () => onglet('decoupe');
 $('o-image').onclick = () => onglet('image');
+$('o-couleur').onclick = () => onglet('couleur');
 
 function errImg(m){ $('err-img').textContent = m || ''; }
 async function json(url, opts){

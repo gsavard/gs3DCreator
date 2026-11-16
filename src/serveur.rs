@@ -14,6 +14,7 @@ use rust_embed::RustEmbed;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
+use crate::couleur::{self, Peinture};
 use crate::ia::{self, Fournisseur};
 use crate::maillage::{self as ml, Maillage};
 use crate::moteur::{self as mo, Config, Coupe, Reperes};
@@ -33,10 +34,18 @@ struct Session {
     rep: Option<Reperes>,
 }
 
+/// Modèle ouvert dans l'onglet Colorier.
+struct SessionCouleur {
+    nom: String,
+    dossier: PathBuf,
+    tm: Arc<Maillage>,
+}
+
 #[derive(Clone)]
 struct Etat {
     travail: PathBuf,
     sessions: Arc<Mutex<HashMap<String, Session>>>,
+    couleurs: Arc<Mutex<HashMap<String, SessionCouleur>>>,
     taches: ia::Taches,
 }
 
@@ -69,6 +78,7 @@ pub fn routeur() -> Router {
     let etat = Etat {
         travail,
         sessions: Arc::new(Mutex::new(HashMap::new())),
+        couleurs: Arc::new(Mutex::new(HashMap::new())),
         taches: Arc::new(Mutex::new(HashMap::new())),
     };
     Router::new()
@@ -78,6 +88,10 @@ pub fn routeur() -> Router {
         .route("/api/modeles/{sid}/decouper", post(decouper))
         .route("/api/modeles/{sid}/fichier/{nom}", get(fichier))
         .route("/api/modeles/{sid}/resultat/{nom}", get(resultat))
+        .route("/api/couleur", post(couleur_ouvrir))
+        .route("/api/couleur/{sid}/maillage", get(couleur_maillage))
+        .route("/api/couleur/{sid}/exporter", post(couleur_exporter))
+        .route("/api/couleur/{sid}/fichier/{nom}", get(couleur_fichier))
         .route("/api/fournisseurs", get(fournisseurs).post(enregistrer_fournisseur))
         .route("/api/fournisseurs/{id}", delete(supprimer_fournisseur))
         .route("/api/fournisseurs/{id}/tester", post(tester_fournisseur))
@@ -517,4 +531,178 @@ async fn statique(uri: Uri) -> Response {
         }
         None => (StatusCode::NOT_FOUND, "Introuvable").into_response(),
     }
+}
+
+// ---------------------------------------------------------------------- colorier
+use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD as B64;
+
+/// Nom de fichier sans caractères problématiques.
+fn nom_propre(nom: &str) -> String {
+    let n: String = nom
+        .chars()
+        .map(|c| {
+            if c.is_alphanumeric() || "-_ ".contains(c) {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    let n = n.trim().to_string();
+    if n.is_empty() { "modele".into() } else { n }
+}
+
+async fn couleur_ouvrir(State(e): State<Etat>, mut mp: Multipart) -> Rep<Json<Value>> {
+    while let Some(champ) = mp
+        .next_field()
+        .await
+        .map_err(|x| Erreur(StatusCode::BAD_REQUEST, format!("Envoi invalide : {x}")))?
+    {
+        if champ.name() != Some("fichier") {
+            continue;
+        }
+        let nom_fichier = champ.file_name().unwrap_or("").to_string();
+        let ext = ml::extension(Path::new(&nom_fichier));
+        if !ml::FORMATS.contains(&ext.as_str()) {
+            return Err(Erreur(
+                StatusCode::BAD_REQUEST,
+                "Format non pris en charge. Utilise STL ou 3MF (OBJ, GLB, PLY et OFF fonctionnent aussi).".into(),
+            ));
+        }
+        let donnees = champ
+            .bytes()
+            .await
+            .map_err(|x| Erreur(StatusCode::BAD_REQUEST, format!("Envoi interrompu : {x}")))?;
+        let sid = uuid::Uuid::new_v4().simple().to_string()[..12].to_string();
+        let dossier = e.travail.join(format!("c{sid}"));
+        std::fs::create_dir_all(&dossier).map_err(|x| Erreur(StatusCode::INTERNAL_SERVER_ERROR, x.to_string()))?;
+        let source = dossier.join(format!("source.{ext}"));
+        std::fs::write(&source, &donnees).map_err(|x| Erreur(StatusCode::INTERNAL_SERVER_ERROR, x.to_string()))?;
+        let nom = nom_propre(
+            &Path::new(&nom_fichier)
+                .file_stem()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_default(),
+        );
+        let (tm, peinture) = tokio::task::spawn_blocking(move || couleur::charger(&source))
+            .await
+            .map_err(|x| Erreur(StatusCode::INTERNAL_SERVER_ERROR, x.to_string()))??;
+        let (lo, hi) = tm.bornes();
+        let reponse = json!({
+            "id": sid,
+            "nom": nom,
+            "triangles": tm.faces.len(),
+            "sommets": tm.sommets.len(),
+            "dims": tm.etendue().map(|v| (v * 100.0).round() / 100.0),
+            "min": lo,
+            "max": hi,
+            "palette": peinture.palette.iter().map(|c| couleur::hex(*c)).collect::<Vec<_>>(),
+            "faces": B64.encode(&peinture.faces),
+            "colore": peinture.palette.len() > 1,
+        });
+        e.couleurs.lock().unwrap().insert(
+            sid,
+            SessionCouleur {
+                nom,
+                dossier,
+                tm: Arc::new(tm),
+            },
+        );
+        return Ok(Json(reponse));
+    }
+    Err(Erreur(StatusCode::BAD_REQUEST, "Aucun fichier reçu.".into()))
+}
+
+/// Maillage en binaire : nombre de sommets (u32), nombre de triangles (u32),
+/// positions (f32 × 3 × sommets), indices (u32 × 3 × triangles), petit-boutiste.
+async fn couleur_maillage(State(e): State<Etat>, Chemin(sid): Chemin<String>) -> Rep<Response> {
+    let tm = e
+        .couleurs
+        .lock()
+        .unwrap()
+        .get(&sid)
+        .map(|s| s.tm.clone())
+        .ok_or_else(introuvable)?;
+    let mut o = Vec::with_capacity(8 + tm.sommets.len() * 12 + tm.faces.len() * 12);
+    o.extend_from_slice(&(tm.sommets.len() as u32).to_le_bytes());
+    o.extend_from_slice(&(tm.faces.len() as u32).to_le_bytes());
+    for v in &tm.sommets {
+        for c in v {
+            o.extend_from_slice(&(*c as f32).to_le_bytes());
+        }
+    }
+    for f in &tm.faces {
+        for i in f {
+            o.extend_from_slice(&i.to_le_bytes());
+        }
+    }
+    Ok(Response::builder()
+        .header(header::CONTENT_TYPE, "application/octet-stream")
+        .header(header::CACHE_CONTROL, "no-store")
+        .body(Body::from(o))
+        .unwrap())
+}
+
+#[derive(Deserialize)]
+struct ExportCouleur {
+    palette: Vec<String>,
+    /// Indice de palette de chaque triangle (octets), en base64.
+    faces: String,
+}
+
+async fn couleur_exporter(
+    State(e): State<Etat>,
+    Chemin(sid): Chemin<String>,
+    Json(d): Json<ExportCouleur>,
+) -> Rep<Json<Value>> {
+    let (tm, nom, dossier) = {
+        let s = e.couleurs.lock().unwrap();
+        let s = s.get(&sid).ok_or_else(introuvable)?;
+        (s.tm.clone(), s.nom.clone(), s.dossier.join("export"))
+    };
+    let mauvais = |m: &str| Erreur(StatusCode::BAD_REQUEST, m.to_string());
+    if d.palette.is_empty() || d.palette.len() > 255 {
+        return Err(mauvais("Palette invalide."));
+    }
+    let palette = d
+        .palette
+        .iter()
+        .map(|h| couleur::depuis_hex(h))
+        .collect::<Option<Vec<_>>>()
+        .ok_or_else(|| mauvais("Couleur invalide dans la palette."))?;
+    let faces = B64
+        .decode(d.faces.as_bytes())
+        .map_err(|_| mauvais("Couleurs des triangles illisibles."))?;
+    let peinture = Peinture { palette, faces };
+    let nom2 = nom.clone();
+    let calc = tokio::task::spawn_blocking(move || -> anyhow::Result<_> {
+        let _ = std::fs::remove_dir_all(&dossier);
+        std::fs::create_dir_all(&dossier)?;
+        couleur::ecrire_3mf(&tm, &peinture, &nom2, &dossier.join(format!("{nom2}_couleur.3mf")))?;
+        let (zp, infos) = couleur::ecrire_zip_stl(&tm, &peinture, &nom2, &dossier)?;
+        Ok((zp, infos, tm.faces.len()))
+    })
+    .await
+    .map_err(|x| Erreur(StatusCode::INTERNAL_SERVER_ERROR, x.to_string()))?;
+    let (zp, infos, total) = calc?;
+    let zip_nom = zp.file_name().unwrap().to_string_lossy().to_string();
+    Ok(Json(json!({
+        "mf": format!("/api/couleur/{sid}/fichier/{}", url_composant(&format!("{nom}_couleur.3mf"))),
+        "zip": format!("/api/couleur/{sid}/fichier/{}", url_composant(&zip_nom)),
+        "couleurs": infos.iter().map(|(c, n, f)| json!({
+            "hex": couleur::hex(*c), "triangles": n, "pct": (*n as f64 * 1000.0 / total as f64).round() / 10.0, "fichier": f,
+        })).collect::<Vec<_>>(),
+    })))
+}
+
+async fn couleur_fichier(State(e): State<Etat>, Chemin((sid, nom)): Chemin<(String, String)>) -> Rep<Response> {
+    let d = e
+        .couleurs
+        .lock()
+        .unwrap()
+        .get(&sid)
+        .map(|s| s.dossier.clone())
+        .ok_or_else(introuvable)?;
+    envoyer(d.join("export").join(nom_sur(&nom)))
 }

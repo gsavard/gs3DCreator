@@ -6,7 +6,7 @@ Les erreurs renvoient `{"detail": "message"}` avec un code HTTP 400, 404, 409 ou
 ## `GET /api/sante`
 
 ```json
-{"app": "gs3dcreator", "version": "2.1.0"}
+{"app": "gs3dcreator", "version": "2.2.0"}
 ```
 
 Sert au lanceur à reconnaître l’application sur un port.
@@ -176,3 +176,39 @@ ID=$(curl -s -F image=@gobelin.png -F fournisseur=$F -F 'options={"hauteur":120}
 until [ "$(curl -s http://127.0.0.1:8790/api/images/$ID | jq -r .etat)" = termine ]; do sleep 5; done
 curl -s -O http://127.0.0.1:8790/api/images/$ID/fichier/gobelin.stl
 ```
+
+## Colorier
+
+### `POST /api/couleur`
+
+Envoi multipart (champ `fichier` : STL, 3MF, OBJ, GLB, PLY ou OFF). Réponse :
+
+```json
+{"id": "a1b2c3d4e5f6", "nom": "dragon", "triangles": 14160, "sommets": 7080,
+ "dims": [40, 40, 40], "min": [-20, -20, 0], "max": [20, 20, 40],
+ "palette": ["#BDB8AE"], "faces": "<base64>", "colore": false}
+```
+
+`palette` commence toujours par la couleur de base (indice 0). `faces` contient, en base64,
+un octet par triangle : son indice dans la palette.
+
+### `GET /api/couleur/{id}/maillage`
+
+Maillage binaire petit-boutiste : nombre de sommets (u32), nombre de triangles (u32),
+positions (f32 × 3 par sommet), indices (u32 × 3 par triangle). L’ordre des triangles est
+celui de `faces`.
+
+### `POST /api/couleur/{id}/exporter`
+
+Corps : `{"palette": ["#BDB8AE", "#E5484D"], "faces": "<base64>"}`. Crée un 3MF (un matériau de
+base par couleur utilisée, `pid`/`p1` par triangle) et un ZIP de STL (un par couleur utilisée).
+
+```json
+{"mf": "/api/couleur/a1b2c3d4e5f6/fichier/dragon_couleur.3mf",
+ "zip": "/api/couleur/a1b2c3d4e5f6/fichier/dragon_couleurs_stl.zip",
+ "couleurs": [{"hex": "#E5484D", "triangles": 536, "pct": 3.8, "fichier": "dragon_02_E5484D.stl"}]}
+```
+
+### `GET /api/couleur/{id}/fichier/{nom}`
+
+Télécharge un fichier produit par l’export.
