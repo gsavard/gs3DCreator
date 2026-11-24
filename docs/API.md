@@ -6,7 +6,7 @@ Les erreurs renvoient `{"detail": "message"}` avec un code HTTP 400, 404, 409 ou
 ## `GET /api/sante`
 
 ```json
-{"app": "gs3dcreator", "version": "2.2.0"}
+{"app": "gs3dcreator", "version": "2.2.1"}
 ```
 
 Sert au lanceur à reconnaître l’application sur un port.

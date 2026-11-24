@@ -15,6 +15,7 @@
   <url type="homepage">https://github.com/gsavard/gs3DCreator</url>
   <developer id="ca.k-trail.gsavard"><name>Guillaume Savard</name></developer>
   <releases>
+    <release version="2.2.1" date="2026-11-24"><description><p>Découpes bornées avec rayon d’action et tri anatomique prioritaire pour éliminer les chevauchements et fragments parasites.</p></description></release>
     <release version="2.2.0" date="2026-11-16"><description><p>Nouvelle section Colorier : choisis les parties d’un STL ou d’un 3MF, attribue-leur des couleurs et exporte un 3MF multicolore ou un STL par couleur.</p></description></release>
     <release version="2.1.0" date="2026-11-04"><description><p>Nouvelle section Image → 3D : génération d’un STL à partir d’une image avec un serveur d’IA local; fournisseurs LM Studio, Ollama, OpenRouter et compatibles OpenAI pour l’analyse d’image.</p></description></release>
     <release version="2.0.0" date="2026-11-04"><description><p>Réécriture complète en Rust.</p></description></release>

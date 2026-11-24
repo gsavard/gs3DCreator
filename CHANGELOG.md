@@ -1,5 +1,17 @@
 # Historique des versions
 
+## 2.2.1 — 2026-11-24
+
+Amélioration intelligente de la découpe et correction des chevauchements de plans.
+
+- **Découpes bornées (rayon d’action)** : chaque plan de coupe dispose d’un rayon d’action
+  local calculé automatiquement selon la morphologie du membre, évitant d'entamer les membres
+  voisins (ex. l’épaule ou l’aile levée quand on coupe le cou).
+- **Tri anatomique prioritaire** : les membres latéraux (bras, ailes, armes) sont détachés en
+  priorité avant la tête et le torse, supprimant les fragments orphelins dus aux plans sécants.
+- **Interface 3D enrichie** : les plans de coupe s’affichent sous forme de disques circulaires
+  délimités dans Three.js, avec un champ de réglage du rayon et des boutons de priorité (▲ / ▼).
+
 ## 2.2.0 — 2026-11-16
 
 Nouvelle section **Colorier**, inspirée de MelSplit : choisis les parties d’un modèle et
