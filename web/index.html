@@ -55,20 +55,21 @@ h1 em{font-style:normal;background:linear-gradient(90deg,var(--pei),var(--violet
 .curseur i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:7px;vertical-align:-1px}
 .curseur output{color:var(--doux);font-variant-numeric:tabular-nums}
 input[type=range]{width:100%;accent-color:var(--pei)}
-.coupe{display:grid;grid-template-columns:12px 1fr auto auto;gap:8px;align-items:center;padding:7px 8px;
-  border:1.5px solid transparent;border-radius:8px;cursor:pointer;font-size:14px}
+.coupe{display:flex;align-items:center;gap:5px;padding:6px 8px;
+  border:1.5px solid transparent;border-radius:8px;cursor:pointer;font-size:13.5px}
 .coupe:hover{background:var(--creux)}
 .coupe.sel{border-color:var(--pei);background:var(--creux)}
-.coupe i{width:12px;height:12px;border-radius:3px}
-.coupe button{background:none;border:1px solid var(--trait);border-radius:6px;font-size:12px;padding:2px 7px;cursor:pointer;color:var(--doux)}
+.coupe i{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.coupe span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.coupe button{background:none;border:1px solid var(--trait);border-radius:5px;font-size:11px;padding:2px 5px;cursor:pointer;color:var(--doux);flex-shrink:0}
 .coupe button:hover{color:var(--texte);border-color:var(--doux)}
 .modes{display:flex;gap:6px;margin:10px 0}
 .modes button{flex:1;background:var(--creux);border:1px solid var(--trait);border-radius:7px;padding:6px;font-size:13px;cursor:pointer}
 .modes button[aria-pressed=true]{border-color:var(--pei);color:var(--pei)}
 .aide{font-size:12.5px;color:var(--doux);margin:6px 0 10px}
-#xyz{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
-#xyz label{font-size:12px;color:var(--doux);display:flex;flex-direction:column;gap:3px}
-#xyz input{background:var(--creux);border:1px solid var(--trait);border-radius:6px;padding:5px 6px;width:100%}
+#xyz{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px}
+#xyz label{font-size:11px;color:var(--doux);display:flex;flex-direction:column;gap:3px}
+#xyz input{background:var(--creux);border:1px solid var(--trait);border-radius:6px;padding:5px 4px;width:100%;font-size:12px}
 .liens{display:flex;justify-content:space-between;gap:10px}
 .reinit{background:none;border:0;color:var(--pei);font-size:13px;padding:0;cursor:pointer;text-decoration:underline}
 
@@ -266,6 +267,7 @@ main.col-actif #vue{cursor:crosshair}
       <label>X (mm)<input type="number" step="0.5" data-i="0"></label>
       <label>Y (mm)<input type="number" step="0.5" data-i="1"></label>
       <label>Z (mm)<input type="number" step="0.5" data-i="2"></label>
+      <label title="Rayon d’action (zone locale) pour éviter d’entamer les membres voisins">Rayon<input type="number" step="1" min="2" id="rayon-coupe" placeholder="Auto"></label>
     </div>
     <p class="aide">Choisis une coupe, puis tire les flèches pour la déplacer ou les anneaux pour l’incliner. Avec Tracer, dessine un trait à travers le membre, à l’angle voulu : le plan suit ton trait. La flèche blanche pointe vers la pièce détachée. Une coupe placée sur une pièce déjà détachée la recoupe (une botte, un avant-bras).</p>
     <div class="liens">
@@ -568,7 +570,8 @@ $('reinit').onclick = chargerGabarit;
 $('ajouter').onclick = () => {
   if (!etat) return;
   nExtra++;
-  coupes.push({label: 'extra_' + nExtra, point: [0, 0, etat.dims[2] / 2], normale: [1, 0, 0]});
+  const T = Math.max(...etat.dims);
+  coupes.push({label: 'extra_' + nExtra, point: [0, 0, etat.dims[2] / 2], normale: [1, 0, 0], rayon: +(T * 0.22).toFixed(1)});
   construireListe(); dessinerPlans(); choisir(coupes.length - 1);
 };
 
@@ -578,12 +581,32 @@ function construireListe(){
     const el = document.createElement('div');
     el.className = 'coupe' + (i === sel ? ' sel' : ''); el.tabIndex = 0;
     el.innerHTML = `<i style="background:${couleur(c.label)}"></i><span>${nom(c.label)}</span>
-      <button type="button" title="Détacher l’autre côté">Inverser</button><button type="button" title="Supprimer" aria-label="Supprimer">×</button>`;
-    const [binv, bsup] = el.querySelectorAll('button');
+      <button type="button" class="b-monter" title="Monter dans l’ordre de priorité">▲</button>
+      <button type="button" class="b-descendre" title="Descendre dans l’ordre de priorité">▼</button>
+      <button type="button" class="b-inverser" title="Détacher l’autre côté">Inv</button>
+      <button type="button" class="b-suppr" title="Supprimer" aria-label="Supprimer">×</button>`;
     el.onclick = () => choisir(i);
     el.onkeydown = e => { if (e.key === 'Enter') choisir(i); };
-    binv.onclick = e => { e.stopPropagation(); c.normale = c.normale.map(v => -v); dessinerPlans(); choisir(i); };
-    bsup.onclick = e => { e.stopPropagation(); coupes.splice(i, 1); sel = -1; construireListe(); dessinerPlans(); };
+    el.querySelector('.b-monter').onclick = e => {
+      e.stopPropagation();
+      if (i > 0) {
+        const tmp = coupes[i]; coupes[i] = coupes[i - 1]; coupes[i - 1] = tmp;
+        sel = i - 1; construireListe(); dessinerPlans(); choisir(sel);
+      }
+    };
+    el.querySelector('.b-descendre').onclick = e => {
+      e.stopPropagation();
+      if (i < coupes.length - 1) {
+        const tmp = coupes[i]; coupes[i] = coupes[i + 1]; coupes[i + 1] = tmp;
+        sel = i + 1; construireListe(); dessinerPlans(); choisir(sel);
+      }
+    };
+    el.querySelector('.b-inverser').onclick = e => {
+      e.stopPropagation(); c.normale = c.normale.map(v => -v); dessinerPlans(); choisir(i);
+    };
+    el.querySelector('.b-suppr').onclick = e => {
+      e.stopPropagation(); coupes.splice(i, 1); sel = -1; construireListe(); dessinerPlans();
+    };
     $('coupes').append(el);
   });
   $('xyz').hidden = sel < 0;
@@ -591,10 +614,20 @@ function construireListe(){
 
 function plan(c, taille){
   const g = new THREE.Group(), col = couleur(c.label);
-  const geo = new THREE.PlaneGeometry(taille, taille);
-  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color: col, transparent: true, opacity: .3, side: THREE.DoubleSide, depthWrite: false}));
-  g.add(m, new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({color: col})));
-  g.add(new THREE.ArrowHelper(Z, new THREE.Vector3(), taille * .35, 0xffffff, taille * .1, taille * .06));
+  const r = c.rayon || (taille * 0.45);
+  const geo = new THREE.CircleGeometry(r, 48);
+  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color: col, transparent: true, opacity: .35, side: THREE.DoubleSide, depthWrite: false}));
+  
+  // Contour circulaire net
+  const pts = [];
+  for (let k = 0; k <= 48; k++) {
+    const theta = (k / 48) * Math.PI * 2;
+    pts.push(new THREE.Vector3(Math.cos(theta) * r, Math.sin(theta) * r, 0));
+  }
+  const bord = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({color: col}));
+  
+  g.add(m, bord);
+  g.add(new THREE.ArrowHelper(Z, new THREE.Vector3(), Math.max(r * 0.7, 10), 0xffffff, Math.max(r * 0.22, 3.5), Math.max(r * 0.13, 2)));
   g.position.fromArray(c.point);
   g.quaternion.setFromUnitVectors(Z, new THREE.Vector3().fromArray(c.normale).normalize());
   m.userData.i = coupes.indexOf(c);
@@ -621,13 +654,21 @@ function choisir(i){
 }
 function afficherXYZ(){
   if (sel < 0) return;
-  $('xyz').querySelectorAll('input').forEach(inp => inp.value = coupes[sel].point[+inp.dataset.i].toFixed(1));
+  $('xyz').querySelectorAll('input[data-i]').forEach(inp => inp.value = coupes[sel].point[+inp.dataset.i].toFixed(1));
+  const rInp = $('rayon-coupe');
+  if (rInp) rInp.value = coupes[sel].rayon ? coupes[sel].rayon.toFixed(1) : '';
 }
-$('xyz').querySelectorAll('input').forEach(inp => inp.onchange = () => {
+$('xyz').querySelectorAll('input[data-i]').forEach(inp => inp.onchange = () => {
   if (sel < 0) return;
   coupes[sel].point[+inp.dataset.i] = +inp.value;
   plans.children[sel].position.fromArray(coupes[sel].point);
 });
+$('rayon-coupe').onchange = () => {
+  if (sel < 0) return;
+  const val = +$('rayon-coupe').value;
+  coupes[sel].rayon = val > 0 ? +val.toFixed(1) : null;
+  dessinerPlans();
+};
 let traceOn = false;
 function mode(m){
   traceOn = m === 'trace';
@@ -687,6 +728,7 @@ function appliquerTrace(a, b){
   if (sel < 0) { nExtra++; coupes.push({label: 'extra_' + nExtra, point: [0, 0, 0], normale: [0, 0, 1]}); sel = coupes.length - 1; }
   coupes[sel].point = centre.toArray().map(v => +v.toFixed(2));
   coupes[sel].normale = n.toArray().map(v => +v.toFixed(5));
+  coupes[sel].rayon = +(A.distanceTo(B) * 0.55).toFixed(1);
   construireListe(); dessinerPlans(); choisir(sel); mode('translate');
 }
 addEventListener('keydown', e => {

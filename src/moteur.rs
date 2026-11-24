@@ -139,6 +139,8 @@ pub struct Coupe {
     pub label: String,
     pub point: [f64; 3],
     pub normale: [f64; 3],
+    #[serde(default)]
+    pub rayon: Option<f64>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -381,17 +383,12 @@ pub fn coupes_defaut(rep: &Reperes, g: &Gabarit) -> Vec<Coupe> {
     let il = if rep.axe_lat == "x" { 0 } else { 1 };
     let io = 1 - il;
     let mut coupes = Vec::new();
-    if g.tete {
-        let c = centre_a(rep, rep.z_cou);
-        coupes.push(Coupe {
-            label: "tete".into(),
-            point: r3([c[0], c[1], rep.z_cou]),
-            normale: [0.0, 0.0, 1.0],
-        });
-    }
+    // 1. Couper les bras en priorité : détache les membres latéraux / ailes levées
+    //    avant que le plan horizontal du cou ne puisse traverser leurs épaules.
     if g.bras {
         let z_ep = rep.z_cou - 0.06 * h;
         let c = centre_a(rep, z_ep);
+        let r_bras = (rep.demi_largeur * 0.45).clamp(10.0, 0.20 * h);
         for (k, s) in [(1, -1.0), (2, 1.0)] {
             let mut n = [0.0; 3];
             n[il] = s;
@@ -402,9 +399,22 @@ pub fn coupes_defaut(rep: &Reperes, g: &Gabarit) -> Vec<Coupe> {
                 label: format!("bras_{k}"),
                 point: r3(pt),
                 normale: n,
+                rayon: Some((r_bras * 10.0).round() / 10.0),
             });
         }
     }
+    // 2. Tête : une fois les bras détachés, le plan du cou n'entaille plus l'épaule.
+    if g.tete {
+        let c = centre_a(rep, rep.z_cou);
+        let r_tete = (rep.demi_largeur * 0.50).clamp(12.0, 0.22 * h);
+        coupes.push(Coupe {
+            label: "tete".into(),
+            point: r3([c[0], c[1], rep.z_cou]),
+            normale: [0.0, 0.0, 1.0],
+            rayon: Some((r_tete * 10.0).round() / 10.0),
+        });
+    }
+    // 3. Jambes
     match g.jambes {
         "separees" => {
             let mut xy = rep.jambes_xy.clone();
@@ -419,20 +429,24 @@ pub fn coupes_defaut(rep: &Reperes, g: &Gabarit) -> Vec<Coupe> {
                     })
                     .collect();
             }
+            let r_jambe = (rep.demi_largeur * 0.45).clamp(10.0, 0.22 * h);
             for (k, v) in xy.iter().enumerate() {
                 coupes.push(Coupe {
                     label: format!("jambe_{}", k + 1),
                     point: r3([v[0], v[1], rep.z_hanche]),
                     normale: [0.0, 0.0, -1.0],
+                    rayon: Some((r_jambe * 10.0).round() / 10.0),
                 });
             }
         }
         "ensemble" => {
             let c = centre_a(rep, rep.z_taille);
+            let r_taille = rep.demi_largeur * 1.15;
             coupes.push(Coupe {
                 label: "jambes".into(),
                 point: r3([c[0], c[1], rep.z_taille]),
                 normale: [0.0, 0.0, -1.0],
+                rayon: Some((r_taille * 10.0).round() / 10.0),
             });
         }
         _ => {}
@@ -473,6 +487,7 @@ fn coupe_locale(
     normale: V3,
     point: V3,
     graines: &[V3],
+    rayon_action: Option<f64>,
     cfg: &Config,
     goujons: &mut Vec<f64>,
 ) -> (Vec<Piece>, Piece, Vec<String>) {
@@ -507,17 +522,48 @@ fn coupe_locale(
     let mut choix: Vec<(usize, Vec<Poly>)> = Vec::new();
     for g in graines {
         let g2 = ml::appliquer_pt(&r, [g.x, g.y, g.z]);
-        let (i, _) = contacts
+        // Si un rayon d'action est défini, filtrer en priorité les îlots dans cette zone
+        let candidats: Vec<&(usize, Poly)> = if let Some(rmax) = rayon_action {
+            let filtres: Vec<&(usize, Poly)> = contacts
+                .iter()
+                .filter(|(_, p)| sc::distance(p, [g2[0], g2[1]]) <= rmax * 1.35)
+                .collect();
+            if filtres.is_empty() {
+                contacts.iter().collect()
+            } else {
+                filtres
+            }
+        } else {
+            contacts.iter().collect()
+        };
+
+        if let Some((i, _)) = candidats
             .iter()
             .min_by(|a, b| sc::distance(&a.1, [g2[0], g2[1]]).total_cmp(&sc::distance(&b.1, [g2[0], g2[1]])))
-            .unwrap();
-        if !choix.iter().any(|(k, _)| k == i) {
-            let ps = contacts
-                .iter()
-                .filter(|(k, _)| k == i)
-                .map(|(_, p)| p.clone())
-                .collect();
-            choix.push((*i, ps));
+        {
+            let i = *i;
+            if !choix.iter().any(|(k, _)| *k == i) {
+                let ps: Vec<Poly> = contacts
+                    .iter()
+                    .filter(|(k, p)| {
+                        if *k != i {
+                            return false;
+                        }
+                        if let Some(rmax) = rayon_action {
+                            sc::distance(p, [g2[0], g2[1]]) <= rmax * 1.45
+                        } else {
+                            true
+                        }
+                    })
+                    .map(|(_, p)| p.clone())
+                    .collect();
+                let ps = if ps.is_empty() {
+                    contacts.iter().filter(|(k, _)| *k == i).map(|(_, p)| p.clone()).collect()
+                } else {
+                    ps
+                };
+                choix.push((i, ps));
+            }
         }
     }
 
@@ -662,7 +708,31 @@ pub fn decouper(tm: &Maillage, coupes: &[Coupe], cfg: &Config) -> Result<Resulta
     }];
     let mut goujons = Vec::new();
     let mut avert = Vec::new();
-    for c in coupes {
+
+    // Tri intelligent des coupes : détacher d'abord les membres latéraux (bras, ailes levées)
+    // avant la tête et le tronc pour éviter que le plan horizontal du cou ne traverse les épaules.
+    let mut coupes_triees: Vec<Coupe> = coupes.to_vec();
+    coupes_triees.sort_by_key(|c| {
+        let l = c.label.as_str();
+        if l.starts_with("bras") {
+            0
+        } else if l.starts_with("jambe") {
+            1
+        } else if l == "tete" {
+            2
+        } else if l == "jambes" {
+            3
+        } else {
+            let n = V3::from(c.normale);
+            if n.x.abs() > 0.6 || n.y.abs() > 0.6 {
+                0
+            } else {
+                2
+            }
+        }
+    });
+
+    for c in &coupes_triees {
         let n = V3::from(c.normale);
         if n.norm() < 1e-9 {
             continue;
@@ -670,7 +740,7 @@ pub fn decouper(tm: &Maillage, coupes: &[Coupe], cfg: &Config) -> Result<Resulta
         let pt = V3::from(c.point);
         let k = piece_contenant(&pieces, c.point);
         let corps = pieces[k].clone();
-        let (ex, reste, a) = coupe_locale(corps, n, pt, &[pt], cfg, &mut goujons);
+        let (ex, reste, a) = coupe_locale(corps, n, pt, &[pt], c.rayon, cfg, &mut goujons);
         avert.extend(a.into_iter().map(|x| format!("{} : {}", nom_lisible(&c.label), x)));
         pieces[k] = reste;
         for mut p in ex {
@@ -945,5 +1015,47 @@ mod tests {
             let r = m.transform_vector(&a.normalize());
             assert!((r - V3::z()).norm() < 1e-9, "{a:?} → {r:?}");
         }
+    }
+
+    #[test]
+    fn non_chevauchement_bras_et_cou() {
+        // Torse central
+        let torse = Manifold::cube(40.0, 30.0, 50.0, true).translate(0.0, 0.0, 25.0);
+        // Cou et tête au sommet (Z = 50 à 80)
+        let cou_tete = Manifold::cylinder(30.0, 8.0, 8.0, 32, false).translate(0.0, 0.0, 50.0);
+        // Bras latéral levé à droite (fusionné avec le torse à X = 20, s'élevant jusqu'à Z = 70)
+        let bras = Manifold::cylinder(40.0, 6.0, 6.0, 32, false)
+            .rotate(0.0, 45.0, 0.0)
+            .translate(18.0, 0.0, 40.0);
+        let m = Manifold::batch_union(&[torse, cou_tete, bras]);
+        let tm = ml::vers_maillage(&m);
+
+        // Deux coupes : tête (horizontale à Z = 55) et bras (latérale à X = 22)
+        let coupes = vec![
+            Coupe {
+                label: "tete".into(),
+                point: [0.0, 0.0, 55.0],
+                normale: [0.0, 0.0, 1.0],
+                rayon: Some(15.0),
+            },
+            Coupe {
+                label: "bras_2".into(),
+                point: [22.0, 0.0, 42.0],
+                normale: [1.0, 0.0, 0.0],
+                rayon: Some(15.0),
+            },
+        ];
+
+        let cfg = Config {
+            connecteur: "aucun".into(),
+            ..Config::default()
+        };
+        let res = decouper(&tm, &coupes, &cfg).unwrap();
+        let fragments = res.pieces.iter().filter(|p| p.label == "fragment").count();
+        assert_eq!(fragments, 0, "Aucun fragment parasite ne doit être généré");
+        let noms: Vec<&str> = res.pieces.iter().map(|p| p.label.as_str()).collect();
+        assert!(noms.contains(&"tete"), "Tête présente");
+        assert!(noms.contains(&"bras_2"), "Bras présent");
+        assert!(noms.contains(&"torse"), "Torse présent");
     }
 }
